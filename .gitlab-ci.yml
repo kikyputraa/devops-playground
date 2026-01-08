@@ -1,0 +1,11 @@
+stages:
+  - sast
+
+sast_scan:
+  stage: sast
+  image: returntocorp/semgrep:latest
+  script:
+    - semgrep --version
+    - semgrep scan --config=auto --error
+  rules:
+    - if: $CI_COMMIT_BRANCH
