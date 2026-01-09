@@ -53,8 +53,8 @@ deploy_to_k8s:
     - echo "--- VALIDASI MANIFEST ---"
     - kubectl apply --dry-run=client -f k8s/
     - echo "--- UPDATE IMAGE DI MANIFEST ---"
-    # Mengganti placeholder image di YAML dengan image yang baru saja di-push
-    - sed -i "s|image:.*|image: $DOCKER_IMAGE:$IMAGE_TAG|g" k8s/deployment.yaml
+    # Gunakan tanda kutip tunggal untuk membungkus perintah sed yang kompleks
+    - 'sed -i "s|image:.*|image: $DOCKER_IMAGE:$IMAGE_TAG|g" k8s/deployment.yaml'
     - echo "Deployment berhasil divalidasi. Siap dideploy ke Minikube."
     - echo "Jalankan perintah ini di WSL Anda:"
     - echo "git pull origin main && kubectl apply -f k8s/"
