@@ -1,7 +1,10 @@
 FROM python:3.9-slim
 WORKDIR /app
-# Docker akan mencari file di folder yang sama dengan Dockerfile
-COPY requirements.txt .
+
+# Perhatikan jalur 'app/' dibawah ini
+COPY app/requirements.txt .
 RUN pip install -r requirements.txt
-COPY . .
+
+COPY app/ .
+
 CMD ["python", "app.py"]
