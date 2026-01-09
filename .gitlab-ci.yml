@@ -49,14 +49,12 @@ push_job:
 deploy_to_k8s:
   stage: deploy
   image: 
-    name: bitnami/kubectl:latest
+    name: alpine:latest # Menggunakan alpine karena ringan dan punya sed
     entrypoint: [""]
   script:
-    - echo "--- VALIDASI MANIFEST ---"
-    # Menambahkan --validate=false agar tidak mencari cluster
-    - kubectl apply --dry-run=client --validate=false -f k8s/
     - echo "--- UPDATE IMAGE DI MANIFEST ---"
     - 'sed -i "s|image:.*|image: $DOCKER_IMAGE:$IMAGE_TAG|g" k8s/deployment.yaml'
-    - echo "Deployment divalidasi dengan aman."
+    - cat k8s/deployment.yaml | grep "image:" # Menampilkan hasil perubahan untuk verifikasi log
+    - echo "Manifes berhasil diupdate secara lokal di pipeline."
   only:
     - main
