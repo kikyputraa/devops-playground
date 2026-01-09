@@ -1,20 +1,22 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: hello-devops
+  name: flask-app-deployment
+  labels:
+    app: flask-web
 spec:
-  replicas: 1
+  replicas: 2
   selector:
     matchLabels:
-      app: hello-devops
+      app: flask-web
   template:
     metadata:
       labels:
-        app: hello-devops
+        app: flask-web
     spec:
       containers:
-      - name: hello-devops
-        image: kikyputraa/hello-devops:latest
-        imagePullPolicy: Always
+      - name: flask-app
+        image: kikyputraa/sast-scan-test:latest
         ports:
         - containerPort: 5000
+        imagePullPolicy: Always
