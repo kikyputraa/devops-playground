@@ -1,11 +1,34 @@
 stages:
   - sast
+  - build
+  - push
+  - deploy
 
+# 1. Tahap SAST (Static Analysis Security Testing)
 sast_scan:
   stage: sast
-  image: returntocorp/semgrep:latest
+  image: python:3.9-slim
   script:
-    - semgrep --version
-    - semgrep scan --config=auto --error
-  rules:
-    - if: $CI_COMMIT_BRANCH
+    - pip install bandit
+    - bandit -r . # Memeriksa celah keamanan pada kode python
+
+# 2. Tahap Build & Push
+build_and_push:
+  stage: build
+  image: docker:20.10.16
+  services:
+    - docker:20.10.16-dind
+  script:
+    - docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
+    - docker build -t $DOCKER_USER/python-app:latest .
+    - docker push $DOCKER_USER/python-app:latest
+
+# 3. Tahap Deploy (Simulasi)
+deploy_app:
+  stage: deploy
+  script:
+    - echo "Menarik image terbaru dari Docker Hub..."
+    - echo "Menjalankan perintah: docker-compose up -d"
+    - echo "Aplikasi berhasil di-deploy!"
+  only:
+    - main
