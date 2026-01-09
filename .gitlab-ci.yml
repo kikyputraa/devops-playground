@@ -30,7 +30,7 @@ build_and_push:
 deploy_app:
   stage: deploy
   script:
-    - echo "Menarik image terbaru: $DOCKER_USER/python-app:latest"
+    - echo "Menarik image terbaru dari Docker Hub"
     - echo "Aplikasi berhasil di-deploy ke environment target."
   only:
     - main
