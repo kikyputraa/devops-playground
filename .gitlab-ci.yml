@@ -53,11 +53,11 @@ deploy_staging:
     entrypoint: [""]
   script:
     - echo "--- KONFIGURASI STAGING ---"
-    # Gunakan format ini untuk menghindari error mapping
-    - sed -i "s|namespace:.*|namespace: staging|g" k8s/deployment.yaml
-    - sed -i "s|namespace:.*|namespace: staging|g" k8s/service.yml
-    - sed -i "s|nodePort: 30001|nodePort: 30002|g" k8s/service.yml
-    - sed -i "s|image:.*|image: $DOCKER_IMAGE:$IMAGE_TAG|g" k8s/deployment.yaml
+    # Gunakan tanda kutip untuk membungkus seluruh perintah
+    - "sed -i 's|namespace:.*|namespace: staging|g' k8s/deployment.yaml"
+    - "sed -i 's|namespace:.*|namespace: staging|g' k8s/service.yml"
+    - "sed -i 's|nodePort: 30001|nodePort: 30002|g' k8s/service.yml"
+    - "sed -i \"s|image:.*|image: $DOCKER_IMAGE:$IMAGE_TAG|g\" k8s/deployment.yaml"
     - echo "Manifest Staging siap."
   rules:
     - if: $CI_COMMIT_BRANCH == "staging"
@@ -70,9 +70,9 @@ deploy_production:
     entrypoint: [""]
   script:
     - echo "--- KONFIGURASI PRODUCTION ---"
-    - sed -i "s|namespace:.*|namespace: default|g" k8s/deployment.yaml
-    - sed -i "s|namespace:.*|namespace: default|g" k8s/service.yml
-    - sed -i "s|image:.*|image: $DOCKER_IMAGE:$IMAGE_TAG|g" k8s/deployment.yaml
+    - "sed -i 's|namespace:.*|namespace: default|g' k8s/deployment.yaml"
+    - "sed -i 's|namespace:.*|namespace: default|g' k8s/service.yml"
+    - "sed -i \"s|image:.*|image: $DOCKER_IMAGE:$IMAGE_TAG|g\" k8s/deployment.yaml"
     - echo "Manifest Production siap."
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
