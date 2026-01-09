@@ -5,10 +5,10 @@ stages:
   - deploy
 
 variables:
-  DOCKER_IMAGE: $DOCKER_USER/python-app
+  DOCKER_IMAGE: $DOCKER_USER/sast-scan-test
 
 # 1. SAST
-sast_scan:
+SAST:
   stage: sast
   image: python:3.9-slim
   script:
@@ -16,7 +16,7 @@ sast_scan:
     - bandit -r app/ # Scan folder app saja
 
 # 2. BUILD
-build_job:
+BUILD:
   stage: build
   image: docker:20.10.16
   services:
@@ -32,7 +32,7 @@ build_job:
     expire_in: 1 hour
 
 # 3. PUSH
-push_job:
+PUSH:
   stage: push
   image: docker:20.10.16
   services:
@@ -48,7 +48,7 @@ push_job:
     - docker push $DOCKER_IMAGE:latest
 
 # 4. DEPLOY
-deploy_job:
+DEPLOY:
   stage: deploy
   script:
     - echo "Deploying image $DOCKER_IMAGE:latest"
