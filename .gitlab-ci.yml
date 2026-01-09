@@ -10,7 +10,7 @@ sast_scan:
   image: python:3.9-slim
   script:
     - pip install bandit
-    - bandit -r . 
+    - bandit -r . -ll
 
 # 2. Tahap Build & Push ke Docker Hub
 build_and_push:
