@@ -53,14 +53,12 @@ deploy_staging:
     entrypoint: [""]
   script:
     - echo "--- KONFIGURASI STAGING ---"
-    # Mengubah namespace menjadi staging
-    - sed -i 's/namespace:.*/namespace: staging/g' k8s/deployment.yaml
-    - sed -i 's/namespace:.*/namespace: staging/g' k8s/service.yml
-    # Mengubah NodePort agar tidak konflik (30001 -> 30002)
-    - sed -i 's/nodePort: 30001/nodePort: 30002/g' k8s/service.yml
-    # Update Image Tag
+    # Gunakan format ini untuk menghindari error mapping
+    - sed -i "s|namespace:.*|namespace: staging|g" k8s/deployment.yaml
+    - sed -i "s|namespace:.*|namespace: staging|g" k8s/service.yml
+    - sed -i "s|nodePort: 30001|nodePort: 30002|g" k8s/service.yml
     - sed -i "s|image:.*|image: $DOCKER_IMAGE:$IMAGE_TAG|g" k8s/deployment.yaml
-    - echo "Manifest Staging siap. Silakan jalankan kubectl apply -f k8s/ -n staging di WSL."
+    - echo "Manifest Staging siap."
   rules:
     - if: $CI_COMMIT_BRANCH == "staging"
 
@@ -72,11 +70,9 @@ deploy_production:
     entrypoint: [""]
   script:
     - echo "--- KONFIGURASI PRODUCTION ---"
-    # Memastikan namespace tetap default (atau production)
-    - sed -i 's/namespace:.*/namespace: default/g' k8s/deployment.yaml
-    - sed -i 's/namespace:.*/namespace: default/g' k8s/service.yml
-    # Update Image Tag
+    - sed -i "s|namespace:.*|namespace: default|g" k8s/deployment.yaml
+    - sed -i "s|namespace:.*|namespace: default|g" k8s/service.yml
     - sed -i "s|image:.*|image: $DOCKER_IMAGE:$IMAGE_TAG|g" k8s/deployment.yaml
-    - echo "Manifest Production siap. Silakan jalankan kubectl apply -f k8s/ di WSL."
+    - echo "Manifest Production siap."
   rules:
     - if: $CI_COMMIT_BRANCH == "main"
