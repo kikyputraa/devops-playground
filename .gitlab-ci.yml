@@ -23,6 +23,7 @@ build_and_push:
   before_script:
     - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USER" --password-stdin
   script:
+    - docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
     - docker build -t $DOCKER_USER/python-app:latest .
     - docker push $DOCKER_USER/python-app:latest
 
