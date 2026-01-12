@@ -34,7 +34,8 @@ sonarqube_check:
   tags:
     - assistx
   script:
-    - 'sonar-scanner -Dsonar.login=$SONAR_TOKEN'
+    # Update: Menggunakan -Dsonar.token menggantikan -Dsonar.login
+    - 'sonar-scanner -Dsonar.token=$SONAR_TOKEN'
   allow_failure: true
 
 build_job:
