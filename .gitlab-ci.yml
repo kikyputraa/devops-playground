@@ -28,11 +28,9 @@ sonarqube_check:
   tags:
     - assistx  # Sesuaikan dengan tag biru di dashboard GitLab Anda
   script:
-    - sonar-scanner 
-      -Dsonar.projectKey=sast-project 
-      -Dsonar.sources=. 
-      -Dsonar.host.url=http://host.docker.internal:9000 
-      -Dsonar.login=$SONAR_TOKEN
+  - sonar-scanner 
+  - Dsonar.host.url=http://host.docker.internal:9000 
+  - Dsonar.login=$SONAR_TOKEN
   allow_failure: true
 
 # 2. Build
