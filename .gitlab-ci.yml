@@ -20,7 +20,7 @@ sast_bandit:
     - bandit -r app/
   allow_failure: false
 
-# Job Scan SonarCloud (Membaca sonar-project.properties)
+# 2. SonarCloud Scan
 sonarqube_check:
   stage: sast
   image: 
@@ -39,7 +39,7 @@ sonarqube_check:
     - sonar-scanner -Dsonar.login=$SONAR_TOKEN
   allow_failure: true
 
-# 2. Build
+# 3. Build
 build_job:
   stage: build
   image: docker:24.0.5
@@ -53,7 +53,7 @@ build_job:
       - app_image.tar
     expire_in: 1 hour
 
-# 3. Security Check (Trivy)
+# 4. Security Check (Trivy)
 trivy_scan:
   stage: security_check
   image: 
@@ -64,7 +64,7 @@ trivy_scan:
   script:
     - trivy image --input app_image.tar --severity HIGH,CRITICAL --exit-code 1
 
-# 4. Push
+# 5. Push
 push_job:
   stage: push
   image: docker:24.0.5
@@ -82,7 +82,7 @@ push_job:
     - docker tag $DOCKER_IMAGE:$IMAGE_TAG $DOCKER_IMAGE:latest
     - docker push $DOCKER_IMAGE:latest
 
-# 5. Deploy (Perbaikan Error Script)
+# 6. Deploy (Solusi Error Nested Array)
 deploy_job:
   stage: deploy
   image: alpine:latest
