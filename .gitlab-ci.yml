@@ -9,7 +9,6 @@ variables:
   DOCKER_USER: "kikyputraa"
   DOCKER_IMAGE: $DOCKER_USER/sast-scan-test
   IMAGE_TAG: $CI_COMMIT_SHORT_SHA
-  # Endpoint resmi SonarCloud
   SONAR_HOST_URL: "https://sonarcloud.io"
 
 # 1. SAST (Bandit)
@@ -21,7 +20,7 @@ sast_bandit:
     - bandit -r app/
   allow_failure: false
 
-# Job Scan menggunakan SonarCloud (Variable dipanggil dari CI/CD Settings)
+# Job Scan SonarCloud
 sonarqube_check:
   stage: sast
   image: 
@@ -58,7 +57,7 @@ build_job:
       - app_image.tar
     expire_in: 1 hour
 
-# 3. Trivy Scan (Security Check)
+# 3. Security Check (Trivy)
 trivy_scan:
   stage: security_check
   image: 
@@ -87,7 +86,7 @@ push_job:
     - docker tag $DOCKER_IMAGE:$IMAGE_TAG $DOCKER_IMAGE:latest
     - docker push $DOCKER_IMAGE:latest
 
-# 5. Deploy (Perbaikan Logika Shell)
+# 5. Deploy (Perbaikan Error "Nested Array")
 deploy_job:
   stage: deploy
   image: alpine:latest
