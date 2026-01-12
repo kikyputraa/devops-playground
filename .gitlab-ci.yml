@@ -1,79 +1,69 @@
 stages:
   - sast
   - build
+  - security_check
   - push
   - deploy
 
 variables:
-  DOCKER_USER: "kikyputraa"
-  DOCKER_IMAGE: $DOCKER_USER/sast-scan-test
-  IMAGE_TAG: $CI_COMMIT_SHORT_SHA
+  DOCKER_IMAGE: "docker.io/${DOCKER_USER}/sast-scan-test"
+  IMAGE_TAG: "${CI_COMMIT_SHORT_SHA}"
 
-# 1. Tahap Scan Keamanan
-sast_scan:
+# 1. Tahap SAST (Static Analysis)
+sast_bandit:
   stage: sast
   image: python:3.9-slim
   script:
     - pip install bandit
-    - bandit -r app/
-  allow_failure: false
+    - bandit -r . -f json -o bandit-report.json
+  artifacts:
+    when: always
+    paths:
+      - bandit-report.json
 
-# 2. Tahap Build Image
-build_job:
+# 2. Tahap Build Image Lokal
+build_image:
   stage: build
-  image: docker:20.10.16
+  image: docker:24.0.5
   services:
-    - docker:20.10.16-dind
+    - docker:24.0.5-dind
   script:
-    - docker build -t $DOCKER_IMAGE:$IMAGE_TAG .
-    - docker save $DOCKER_IMAGE:$IMAGE_TAG > app_image.tar
+    - docker build -t ${DOCKER_IMAGE}:${IMAGE_TAG} .
+    - docker save ${DOCKER_IMAGE}:${IMAGE_TAG} > image.tar
   artifacts:
     paths:
-      - app_image.tar
-    expire_in: 1 hour
+      - image.tar
 
-# 3. Tahap Push ke Docker Hub
-push_job:
+# 3. Tahap Trivy (Vulnerability Scanning)
+trivy_scan:
+  stage: security_check
+  image: 
+    name: aquasec/trivy:latest
+    entrypoint: [""]
+  script:
+    - trivy image --input image.tar --severity HIGH,CRITICAL --exit-code 1
+  # Pipeline akan GAGAL (stop) jika ditemukan celah HIGH atau CRITICAL
+
+# 4. Tahap Push ke Registry
+push_registry:
   stage: push
-  image: docker:20.10.16
+  image: docker:24.0.5
   services:
-    - docker:20.10.16-dind
-  before_script:
+    - docker:24.0.5-dind
+  script:
+    - docker load < image.tar
     - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USER" --password-stdin
-  script:
-    - docker load < app_image.tar
-    - docker push $DOCKER_IMAGE:$IMAGE_TAG
-    - docker tag $DOCKER_IMAGE:$IMAGE_TAG $DOCKER_IMAGE:latest
-    - docker push $DOCKER_IMAGE:latest
+    - docker push ${DOCKER_IMAGE}:${IMAGE_TAG}
+    - docker tag ${DOCKER_IMAGE}:${IMAGE_TAG} ${DOCKER_IMAGE}:latest
+    - docker push ${DOCKER_IMAGE}:latest
 
-# 4a. Tahap Deploy ke STAGING
-deploy_staging:
+# 5. Tahap Deploy ke Kubernetes
+deploy_k8s:
   stage: deploy
-  image: 
-    name: alpine:latest
-    entrypoint: [""]
+  image: bitnami/kubectl:latest
   script:
-    - echo "--- KONFIGURASI STAGING ---"
-    # Gunakan tanda kutip untuk membungkus seluruh perintah
-    - "sed -i 's|namespace:.*|namespace: staging|g' k8s/deployment.yaml"
-    - "sed -i 's|namespace:.*|namespace: staging|g' k8s/service.yml"
-    - "sed -i 's|nodePort: 30001|nodePort: 30002|g' k8s/service.yml"
-    - "sed -i \"s|image:.*|image: $DOCKER_IMAGE:$IMAGE_TAG|g\" k8s/deployment.yaml"
-    - echo "Manifest Staging siap."
-  rules:
-    - if: $CI_COMMIT_BRANCH == "staging"
-
-# 4b. Tahap Deploy ke PRODUCTION
-deploy_production:
-  stage: deploy
-  image: 
-    name: alpine:latest
-    entrypoint: [""]
-  script:
-    - echo "--- KONFIGURASI PRODUCTION ---"
-    - "sed -i 's|namespace:.*|namespace: default|g' k8s/deployment.yaml"
-    - "sed -i 's|namespace:.*|namespace: default|g' k8s/service.yml"
-    - "sed -i \"s|image:.*|image: $DOCKER_IMAGE:$IMAGE_TAG|g\" k8s/deployment.yaml"
-    - echo "Manifest Production siap."
-  rules:
-    - if: $CI_COMMIT_BRANCH == "main"
+    - kubectl config use-context path/to/your/context
+    - sed -i "s|image:.*|image: ${DOCKER_IMAGE}:${IMAGE_TAG}|g" k8s/deployment.yaml
+    - kubectl apply -f k8s/deployment.yaml -n staging
+  only:
+    - main
