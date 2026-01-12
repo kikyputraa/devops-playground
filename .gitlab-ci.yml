@@ -50,7 +50,14 @@ push_job:
   image: docker:24.0.5
   services:
     - docker:24.0.5-dind
-  needs: ["trivy_scan"]
+  # TAMBAHKAN INI: Memastikan file dari build_job didownload
+  dependencies:
+    - build_job
+  # Atau gunakan needs agar lebih cepat
+  needs:
+    - job: build_job
+      artifacts: true
+    - job: trivy_scan  # Pastikan scan lulus dulu baru push
   before_script:
     - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USER" --password-stdin
   script:
