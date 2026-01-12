@@ -40,9 +40,3 @@ Pipeline GitLab CI/CD terdiri dari 4 tahap utama:
 - GitLab Runner terkonfigurasi.
 - Docker Hub account.
 
-### Menjalankan di Lokal (WSL)
-
-1. **Clone Repositori:**
-   ```bash
-   git clone [https://gitlab.com/kikyputraa/sast-test.git](https://gitlab.com/kikyputraa/sast-test.git)
-   cd sast-test
