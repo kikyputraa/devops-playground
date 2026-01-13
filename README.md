@@ -82,7 +82,7 @@ Untuk menjalankan pipeline ini dengan sukses, pastikan variabel berikut telah di
 ![alt text](<WhatsApp Image 2026-01-13 at 16.25.03.jpeg>)
 - **GitLab Pipeline :**
 ![alt text](<WhatsApp Image 2026-01-13 at 16.25.54.jpeg>)
-- **SonarCloud Quality Gate :**
+- **SonarCloud Quality Analysis :**
 ![alt text](<WhatsApp Image 2026-01-13 at 16.26.35.jpeg>)
 
 ---
