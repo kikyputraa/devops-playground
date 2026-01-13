@@ -77,4 +77,12 @@ Untuk menjalankan pipeline ini dengan sukses, pastikan variabel berikut telah di
 * `DOCKER_USER`: Username Docker Hub.
 * `DOCKER_PASSWORD`: Password atau Personal Access Token Docker Hub.
 
+## Output Pipeline dan Quality Check
+- **GitHub Actions Pipeline :**
+![alt text](<WhatsApp Image 2026-01-13 at 16.25.03.jpeg>)
+- **GitLab Pipeline :**
+![alt text](<WhatsApp Image 2026-01-13 at 16.25.54.jpeg>)
+- **SonaqCloud Quality Gate :**
+![alt text](<WhatsApp Image 2026-01-13 at 16.26.35.jpeg>)
+
 ---
