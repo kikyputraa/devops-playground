@@ -1,6 +1,6 @@
 # Flask DevSecOps Pipeline with Kubernetes
 
-![CI](https://github.com/kikyputraa/devops-playground/actions/workflows/pipeline.yml/badge.svg)
+[![CI/CD Pipeline](https://github.com/kikyputraa/devops-playground/actions/workflows/pipeline.yml/badge.svg?branch=staging)](https://github.com/kikyputraa/devops-playground/actions/workflows/pipeline.yml)
 [![pipeline status](https://gitlab.com/kikyputraa/sast-test/badges/staging/pipeline.svg)](https://gitlab.com/kikyputraa/sast-test/-/commits/staging)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=kikyputraa_devops-playground&metric=alert_status)](https://sonarcloud.io/dashboard?id=kikyputraa_devops-playground)
 ![Last Commit](https://img.shields.io/github/last-commit/kikyputraa/devops-playground)
