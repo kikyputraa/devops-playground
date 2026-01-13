@@ -13,18 +13,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Penting untuk SonarCloud agar bisa melihat history git
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
           python-version: '3.9'
 
-      - name: Run Bandit (Security Audit)
+      - name: Run Bandit
         run: |
           pip install bandit
-          # Flag -r: recursive, -ll: level LOW atau lebih tinggi
-          # Flag -x: abaikan folder test jika ada
+          # Menghentikan pipeline jika ada temuan (exit code 1 secara otomatis)
           bandit -r app/ -ll -v
           
       - name: SonarCloud Scan
@@ -48,14 +47,12 @@ jobs:
       - name: Build Docker Image
         run: docker build -t ${{ secrets.DOCKER_USER }}/flask-app:${{ github.sha }} .
 
-      - name: Run Trivy Vulnerability Scanner
+      - name: Run Trivy Scanner
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: '${{ secrets.DOCKER_USER }}/flask-app:${{ github.sha }}'
           format: 'table'
-          exit-code: '1' # MEMBUAT PIPELINE GAGAL jika ditemukan celah
-          ignore-unfixed: true
-          vuln-type: 'os,library'
+          exit-code: '1' # WAJIB: Membuat GitHub Actions Gagal jika ada celah
           severity: 'CRITICAL,HIGH'
 
       - name: Login to Docker Hub
@@ -64,28 +61,16 @@ jobs:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Push Image to Docker Hub
+      - name: Push Image
         run: docker push ${{ secrets.DOCKER_USER }}/flask-app:${{ github.sha }}
 
   deploy:
     name: Deploy to Kubernetes
     needs: build-and-scan
-    runs-on: self-hosted # Menggunakan runner lokal Anda (WSL2)
+    runs-on: self-hosted
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set Environment Context
-        run: |
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            echo "NAMESPACE=default" >> $GITHUB_ENV
-            echo "NODE_PORT=30001" >> $GITHUB_ENV
-          else
-            echo "NAMESPACE=staging" >> $GITHUB_ENV
-            echo "NODE_PORT=30002" >> $GITHUB_ENV
-          fi
-
       - name: Deploy to Minikube
         run: |
           sed -i "s|{{IMAGE_TAG}}|${{ github.sha }}|g" k8s/deployment.yaml
-          sed -i "s|{{NAMESPACE}}|${{ env.NAMESPACE }}|g" k8s/deployment.yaml
-          kubectl apply -f k8s/deployment.yaml -n ${{ env.NAMESPACE }}
+          kubectl apply -f k8s/deployment.yaml -n staging
