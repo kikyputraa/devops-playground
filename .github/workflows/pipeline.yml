@@ -7,27 +7,55 @@ on:
 env:
   DOCKER_USER: "kikyputraa"
   DOCKER_IMAGE: "kikyputraa/sast-scan-test"
+  SONAR_ORG_KEY: "isi_dengan_org_key_anda" # Pastikan ini sesuai dengan di SonarCloud
+  SONAR_PROJECT_KEY: "isi_dengan_project_key_anda"
 
 jobs:
-  sast_and_test:
-    name: Code Analysis & Testing
+  # 1. UNIT TEST
+  unit_test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Run Tests
+        run: |
+          pip install pytest pytest-cov
+          pytest --cov=app --cov-report=xml tests/
+      - name: Upload Coverage Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage.xml
+
+  # 2. SAST BANDIT
+  sast_bandit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+      - name: Run Bandit
+        run: |
+          pip install bandit
+          bandit -r app/
+
+  # 3. SONARQUBE CHECK
+  sonarqube_check:
+    needs: unit_test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
+      - name: Download Coverage Artifact
+        uses: actions/download-artifact@v4
         with:
-          python-version: '3.9'
-
-      - name: Install dependencies & Run Tests
-        run: |
-          pip install pytest pytest-cov
-          # Menghasilkan coverage.xml untuk SonarCloud
-          pytest --cov=app --cov-report=xml tests/
-
+          name: coverage-report
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
@@ -35,52 +63,74 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         with:
           args: >
-            -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
-            -Dsonar.organization=${{ secrets.SONAR_ORG_KEY }}
+            -Dsonar.projectKey=${{ env.SONAR_PROJECT_KEY }}
+            -Dsonar.organization=${{ env.SONAR_ORG_KEY }}
             -Dsonar.sources=.
             -Dsonar.python.coverage.reportPaths=coverage.xml
             -Dsonar.qualitygate.wait=false
 
-  build_and_security:
-    name: Build and Security Scan
-    needs: sast_and_test
+  # 4. BUILD
+  build_job:
+    needs: [sast_bandit, sonarqube_check]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - name: Build and Save Image
+        run: |
+          docker build -t ${{ env.DOCKER_IMAGE }}:${{ github.sha }} .
+          docker save ${{ env.DOCKER_IMAGE }}:${{ github.sha }} > app_image.tar
+      - name: Upload Image Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: docker-image
+          path: app_image.tar
 
-      - name: Build Docker Image
-        run: docker build -t ${{ env.DOCKER_IMAGE }}:${{ github.sha }} .
-
-      - name: Run Trivy Vulnerability Scanner
+  # 5. SECURITY CHECK (Trivy)
+  security_check:
+    needs: build_job
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Image Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-image
+      - name: Run Trivy Scan
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: '${{ env.DOCKER_IMAGE }}:${{ github.sha }}'
           format: 'table'
           exit-code: '1'
           ignore-unfixed: true
-          vuln-type: 'os,library'
           severity: 'CRITICAL,HIGH'
 
+  # 6. PUSH
+  push_job:
+    needs: security_check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Image Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-image
       - name: Login to Docker Hub
         uses: docker/login-action@v3
         with:
           username: ${{ env.DOCKER_USER }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-
-      - name: Push Image
+      - name: Load and Push Image
         run: |
+          docker load < app_image.tar
           docker push ${{ env.DOCKER_IMAGE }}:${{ github.sha }}
           docker tag ${{ env.DOCKER_IMAGE }}:${{ github.sha }} ${{ env.DOCKER_IMAGE }}:latest
           docker push ${{ env.DOCKER_IMAGE }}:latest
 
-  deploy:
-    name: Deploy to K8s
-    needs: build_and_security
+  # 7. DEPLOY
+  deploy_job:
+    needs: push_job
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Prepare Manifests
+      - name: Update Manifests
         run: |
           if [ "${{ github.ref_name }}" == "main" ]; then
             NAMESPACE="default"
@@ -93,4 +143,4 @@ jobs:
           sed -i "s|namespace:.*|namespace: $NAMESPACE|g" k8s/service.yml
           sed -i "s|nodePort:.*|nodePort: $PORT|g" k8s/service.yml
           sed -i "s|image:.*|image: ${{ env.DOCKER_IMAGE }}:${{ github.sha }}|g" k8s/deployment.yaml
-          echo "Deployment ready for $NAMESPACE"
+          echo "Deployment updated for $NAMESPACE"
