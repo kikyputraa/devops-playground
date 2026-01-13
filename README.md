@@ -1,11 +1,17 @@
 # Flask DevSecOps Pipeline with Kubernetes
 
 ![CI](https://github.com/kikyputraa/devops-playground/actions/workflows/pipeline.yml/badge.svg)
-![pipeline status](https://gitlab.com/kikyputraa/devops-playground/badges/staging/pipeline.svg)
+[![pipeline status](https://gitlab.com/kikyputraa/sast-test/badges/staging/pipeline.svg)](https://gitlab.com/kikyputraa/sast-test/-/commits/staging)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=kikyputraa_devops-playground&metric=alert_status)](https://sonarcloud.io/dashboard?id=kikyputraa_devops-playground)
+![Last Commit](https://img.shields.io/github/last-commit/kikyputraa/devops-playground)
+
 ![Python](https://img.shields.io/badge/python-3.9-slim)
 ![Docker](https://img.shields.io/badge/docker-enabled-blue)
 ![Kubernetes](https://img.shields.io/badge/kubernetes-ready-blue)
+
+![DevSecOps](https://img.shields.io/badge/DevSecOps-enabled-green)
+![SAST](https://img.shields.io/badge/SAST-Bandit-blue)
+![Container%20Scan](https://img.shields.io/badge/Trivy-container--scan-blue)
 
 
 Proyek ini mendemonstrasikan implementasi alur kerja **DevSecOps** modern untuk aplikasi berbasis Python Flask. Sistem ini mengintegrasikan pemindaian keamanan otomatis tingkat lanjut, containerization, dan manajemen multi-environment menggunakan dual-platform CI/CD (GitLab & GitHub Actions).
