@@ -7,8 +7,9 @@ on:
 env:
   DOCKER_USER: "kikyputraa"
   DOCKER_IMAGE: "kikyputraa/sast-scan-test"
-  SONAR_ORG_KEY: "isi_dengan_org_key_anda" # Pastikan ini sesuai dengan di SonarCloud
-  SONAR_PROJECT_KEY: "isi_dengan_project_key_anda"
+  # Ganti nilai di bawah ini dengan Key asli dari SonarCloud Information
+  SONAR_PROJECT_KEY: "PROJECT_KEY_ANDA"
+  SONAR_ORG_KEY: "ORG_KEY_ANDA"
 
 jobs:
   # 1. UNIT TEST
@@ -57,7 +58,7 @@ jobs:
         with:
           name: coverage-report
       - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
+        uses: SonarSource/sonarqube-scan-action@v5
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
