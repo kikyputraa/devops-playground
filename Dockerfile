@@ -1,4 +1,4 @@
-FROM python:3.9-slim
+FROM python:3.7-alpine3.10
 WORKDIR /app
 
 # Perhatikan jalur 'app/' dibawah ini
