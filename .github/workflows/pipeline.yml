@@ -6,26 +6,27 @@ on:
   pull_request:
     branches: [ "main", "staging" ]
 
+env:
+  DOCKER_USER: "kikyputraa"
+  DOCKER_IMAGE: "kikyputraa/sast-scan-test"
+  IMAGE_TAG: ${{ github.sha }} # Menggunakan full SHA agar unik
+
 jobs:
+  # STAGE: SAST
   sast:
-    name: Security Scan (SAST)
+    name: SAST Scan
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
-
-      - name: Run Bandit
+      - name: Bandit Scan
         run: |
           pip install bandit
-          # Menghentikan pipeline jika ada temuan (exit code 1 secara otomatis)
-          bandit -r app/ -ll -v
-          
+          bandit -r app/
+        # allow_failure: false di GitLab adalah default di GitHub (jika error, stop)
+
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
@@ -35,43 +36,97 @@ jobs:
           args: >
             -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}
             -Dsonar.organization=${{ secrets.SONAR_ORG_KEY }}
-            -Dsonar.sources=app/
-            -Dsonar.qualitygate.wait=false
-            
-  build-and-scan:
-    name: Build and Image Scan
+            -Dsonar.sources=.
+            -Dsonar.host.url=https://sonarcloud.io
+        continue-on-error: true # Sesuai 'allow_failure: true' di GitLab
+
+  # STAGE: BUILD
+  build:
+    name: Build Image
     needs: sast
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build Docker Image
-        run: docker build -t ${{ secrets.DOCKER_USER }}/flask-app:${{ github.sha }} .
+      - name: Build and Save Image
+        run: |
+          docker build -t $DOCKER_IMAGE:$IMAGE_TAG .
+          docker save $DOCKER_IMAGE:$IMAGE_TAG > app_image.tar
 
-      - name: Run Trivy Scanner
+      - name: Upload Image Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-image
+          path: app_image.tar
+          retention-days: 1
+
+  # STAGE: SECURITY CHECK
+  security_check:
+    name: Trivy Scan
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-image
+
+      - name: Run Trivy Scan
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: '${{ secrets.DOCKER_USER }}/flask-app:${{ github.sha }}'
-          format: 'table'
-          exit-code: '1' # WAJIB: Membuat GitHub Actions Gagal jika ada celah
-          severity: 'CRITICAL,HIGH'
+          input: 'app_image.tar'
+          severity: 'HIGH,CRITICAL'
+          exit-code: '1' # Sesuai --exit-code 1 di GitLab
+
+  # STAGE: PUSH
+  push:
+    name: Push to Docker Hub
+    needs: [build, security_check]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-image
 
       - name: Login to Docker Hub
-        uses: docker/login-action@v2
+        uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKER_USER }}
+          username: ${{ env.DOCKER_USER }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Push Image
-        run: docker push ${{ secrets.DOCKER_USER }}/flask-app:${{ github.sha }}
+      - name: Load and Push Image
+        run: |
+          docker load < app_image.tar
+          docker push $DOCKER_IMAGE:$IMAGE_TAG
+          docker tag $DOCKER_IMAGE:$IMAGE_TAG $DOCKER_IMAGE:latest
+          docker push $DOCKER_IMAGE:latest
 
+  # STAGE: DEPLOY
   deploy:
     name: Deploy to Kubernetes
-    needs: build-and-scan
-    runs-on: self-hosted
+    needs: push
+    runs-on: self-hosted # Menggunakan runner lokal Anda
     steps:
       - uses: actions/checkout@v4
-      - name: Deploy to Minikube
+
+      - name: Update K8s Manifests (sed)
         run: |
-          sed -i "s|{{IMAGE_TAG}}|${{ github.sha }}|g" k8s/deployment.yaml
-          kubectl apply -f k8s/deployment.yaml -n staging
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            NAMESPACE="default"
+            PORT="30001"
+          else
+            NAMESPACE="staging"
+            PORT="30002"
+          fi
+          
+          sed -i "s|namespace:.*|namespace: $NAMESPACE|g" k8s/deployment.yaml
+          sed -i "s|namespace:.*|namespace: $NAMESPACE|g" k8s/service.yml
+          sed -i "s|nodePort:.*|nodePort: $PORT|g" k8s/service.yml
+          sed -i "s|image:.*|image: $DOCKER_IMAGE:$IMAGE_TAG|g" k8s/deployment.yaml
+          
+          # Di GitHub kita perlu apply langsung jika menggunakan self-hosted
+          kubectl apply -f k8s/deployment.yaml -n $NAMESPACE
+          kubectl apply -f k8s/service.yml -n $NAMESPACE
+          
+          echo "Deployment updated for $NAMESPACE"
