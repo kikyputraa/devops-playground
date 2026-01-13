@@ -21,6 +21,13 @@ jobs:
         with:
           fetch-depth: 0
 
+# --- TAMBAHKAN LANGKAH INI ---
+      - name: Install dependencies & Run Tests
+        run: |
+          pip install pytest pytest-cov
+          # Menjalankan test dan menghasilkan laporan coverage dalam format XML
+          pytest --cov=app --cov-report=xml tests/
+
       - name: Run Bandit (Python SAST)
         run: |
           pip install bandit
