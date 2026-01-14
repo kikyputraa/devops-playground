@@ -23,8 +23,6 @@ This project demonstrates the implementation of a modern **DevSecOps** workflow 
 ![Kubernetes](https://img.shields.io/badge/Kubernetes-K3s/Minikube-blue?logo=kubernetes)
 ![Flask](https://img.shields.io/badge/Framework-Flask-lightgrey?logo=flask)
 
----
-
 ## 📋 Prerequisites
 
 To run this project from development to automated deployment, you will need the following components:
@@ -59,14 +57,7 @@ Ensure the following files are in the project root directory:
 * `k8s/`: Folder containing `deployment.yaml` and `service.yml` manifests.
 * `requirements.txt`: List of Python dependencies (Flask, Pytest-cov, etc.).
 
-<<<<<<< HEAD
 ## 🚀 Key Features
-=======
----
-
-## 🚀 Fitur Utama
->>>>>>> 707366c638708f055f346a54889d12b0b2b5f2fb
-
 - **SAST (Static Application Security Testing):**
   - **Bandit:** Fast scanning to detect Python-specific security flaws like hardcoded passwords or insecure imports.
   - **SonarCloud:** Deep analysis for Code Smells, Vulnerabilities, and Bugs with comprehensive dashboard reports.
@@ -84,30 +75,16 @@ The security workflow is designed to fail the pipeline if high-risk issues are d
 4. **Push:** Sends validated images to Docker Hub.
 5. **Deploy:** Injects environment configurations into Kubernetes manifests (Namespace & Port) using `sed`.
 
-<<<<<<< HEAD
 ## 🛠️ Environment Details
 
 | Feature | Staging Environment | Production Environment |
-=======
----
-
-## 🛠️ Detail Environment
-
-| Fitur | Staging Environment | Production Environment |
->>>>>>> 707366c638708f055f346a54889d12b0b2b5f2fb
 | :--- | :--- | :--- |
 | **Branch** | `staging` | `main` |
 | **K8s Namespace** | `staging` | `default` |
 | **NodePort** | `30002` | `30001` |
 | **SonarCloud Project** | `kikyputraa_devops-playground` | `kikyputraa_devops-playground` |
 
-<<<<<<< HEAD
 ## ⚙️ Secrets Configuration
-=======
----
-
-## ⚙️ Konfigurasi Secrets
->>>>>>> 707366c638708f055f346a54889d12b0b2b5f2fb
 
 To run this pipeline successfully, ensure the following variables are set in **GitLab CI/CD Variables** or **GitHub Actions Secrets**:
 
@@ -117,10 +94,7 @@ To run this pipeline successfully, ensure the following variables are set in **G
 * `DOCKER_USER`: Docker Hub username.
 * `DOCKER_PASSWORD`: Docker Hub password or Personal Access Token.
 
-<<<<<<< HEAD
----
-**Maintained by [kikyputraa](https://github.com/kikyputraa)**
-=======
 
 ---
->>>>>>> 707366c638708f055f346a54889d12b0b2b5f2fb
+**Maintained by [kikyputraa](https://github.com/kikyputraa)**
+
