@@ -1,4 +1,4 @@
-# Flask DevSecOps Pipeline with Kubernetes
+# DevSecOps Project
 
 Proyek ini mendemonstrasikan implementasi alur kerja **DevSecOps** modern untuk aplikasi sederhana berbasis Python Flask. Sistem ini mengintegrasikan pemindaian keamanan otomatis tingkat lanjut, containerization, dan manajemen multi-environment menggunakan dual-platform CI/CD (GitLab & GitHub Actions).
 
