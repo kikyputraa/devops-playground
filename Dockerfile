@@ -5,8 +5,7 @@ ENV PYTHONUNBUFFERED=1
 
 WORKDIR /app
 
-RUN pip install --no-cache-dir --upgrade pip setuptools \
-    && pip install --no-cache-dir "jaraco.context>=6.1.0"
+RUN pip install --no-cache-dir --upgrade pip setuptools
 
 COPY app/requirements.txt .
 
