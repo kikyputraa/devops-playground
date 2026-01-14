@@ -1,20 +1,29 @@
 # Flask DevSecOps Pipeline with Kubernetes
 
-[![CI/CD Pipeline](https://github.com/kikyputraa/devops-playground/actions/workflows/pipeline.yml/badge.svg?branch=staging)](https://github.com/kikyputraa/devops-playground/actions/workflows/pipeline.yml)
-[![pipeline status](https://gitlab.com/kikyputraa/sast-test/badges/staging/pipeline.svg)](https://gitlab.com/kikyputraa/sast-test/-/commits/staging)
+Proyek ini mendemonstrasikan implementasi alur kerja **DevSecOps** modern untuk aplikasi sederhana berbasis Python Flask. Sistem ini mengintegrasikan pemindaian keamanan otomatis tingkat lanjut, containerization, dan manajemen multi-environment menggunakan dual-platform CI/CD (GitLab & GitHub Actions).
+
+---
+
+### 🏗️ Build & Deployment
+[![GitHub Pipeline](https://github.com/kikyputraa/devops-playground/actions/workflows/pipeline.yml/badge.svg?branch=staging)](https://github.com/kikyputraa/devops-playground/actions)
+[![GitLab Pipeline](https://gitlab.com/kikyputraa/sast-test/badges/staging/pipeline.svg)](https://gitlab.com/kikyputraa/sast-test/-/commits/staging)
+[![Docker Pulls](https://img.shields.io/docker/pulls/kikyputraa/sast-scan-test?label=Docker%20Pulls&logo=docker&logoColor=white)](https://hub.docker.com/r/kikyputraa/sast-scan-test)
+[![Last Commit](https://img.shields.io/github/last-commit/kikyputraa/devops-playground/staging?logo=git)](https://github.com/kikyputraa/devops-playground/commits/staging)
+
+### 🛡️ Security & Quality Gate
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=kikyputraa_devops-playground&metric=alert_status)](https://sonarcloud.io/dashboard?id=kikyputraa_devops-playground)
-[![Last Commit](https://img.shields.io/github/last-commit/kikyputraa/devops-playground/staging)](https://github.com/kikyputraa/devops-playground/commits/staging)
-
-![Python](https://img.shields.io/badge/python-3.9-slim)
-![Docker](https://img.shields.io/badge/docker-enabled-blue)
-![Kubernetes](https://img.shields.io/badge/kubernetes-ready-blue)
-
-![DevSecOps](https://img.shields.io/badge/DevSecOps-enabled-green)
+[![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=kikyputraa_devops-playground&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=kikyputraa_devops-playground)
+![DevSecOps](https://img.shields.io/badge/DevSecOps-Automated-green?logo=shield)
 ![SAST](https://img.shields.io/badge/SAST-Bandit-blue)
-![Container%20Scan](https://img.shields.io/badge/Trivy-container--scan-blue)
+![Container Scan](https://img.shields.io/badge/SCA-Trivy-blue)
 
+### 🛠️ Infrastructure & Tech Stack
+![Python](https://img.shields.io/badge/Python-3.9--slim-blue?logo=python)
+![Docker](https://img.shields.io/badge/Docker-Containerized-blue?logo=docker)
+![Kubernetes](https://img.shields.io/badge/Kubernetes-K3s/Minikube-blue?logo=kubernetes)
+![Flask](https://img.shields.io/badge/Framework-Flask-lightgrey?logo=flask)
 
-Proyek ini mendemonstrasikan implementasi alur kerja **DevSecOps** modern untuk aplikasi berbasis Python Flask. Sistem ini mengintegrasikan pemindaian keamanan otomatis tingkat lanjut, containerization, dan manajemen multi-environment menggunakan dual-platform CI/CD (GitLab & GitHub Actions).
+---
 
 ## 🛠️ Prasyarat (Requirements)
 
