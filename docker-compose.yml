@@ -2,22 +2,16 @@ version: '3.8'
 
 services:
   python-app:
-    # 1. build memberitahu compose di mana Dockerfile berada
     build:
       context: .
       dockerfile: Dockerfile
     
-    # 2. Nama image yang akan digunakan/dihasilkan
-    # Ganti 'username' dan 'nama-image-baru' sesuai keinginanmu
     image: ${DOCKER_USER}/flask-web-service:latest
-    
-    # 3. Mapping port: port_host:port_container
+
     ports:
       - "5000:5000"
-    
-    # 4. Environment variables (jika diperlukan aplikasi)
+
     environment:
       - FLASK_ENV=development
-    
-    # 5. Restart policy agar container otomatis jalan lagi jika crash
+
     restart: always

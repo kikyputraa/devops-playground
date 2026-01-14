@@ -6,7 +6,7 @@ on:
 
 env:
   DOCKER_USER: "kikyputraa"
-  DOCKER_IMAGE: "kikyputraa/sast-scan-test"
+  DOCKER_IMAGE: "kikyputraa/devops-playground"
 
 jobs:
   unit_test:

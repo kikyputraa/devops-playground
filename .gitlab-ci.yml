@@ -7,7 +7,7 @@ stages:
 
 variables:
   DOCKER_USER: "kikyputraa"
-  DOCKER_IMAGE: $DOCKER_USER/sast-scan-test
+  DOCKER_IMAGE: $DOCKER_USER/devops-playground
   IMAGE_TAG: $CI_COMMIT_SHORT_SHA
   # Host URL tetap di sini agar fleksibel jika pindah ke Self-Managed SonarQube
   SONAR_HOST_URL: "https://sonarcloud.io"
