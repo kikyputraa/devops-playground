@@ -59,6 +59,7 @@ Pastikan file-file berikut berada di root direktori proyek:
 * `k8s/`: Folder berisi manifest `deployment.yaml` dan `service.yml`.
 * `requirements.txt`: Daftar dependensi Python (Flask, Pytest-cov, dll).
 
+---
 
 ## 🚀 Fitur Utama
 
@@ -79,7 +80,7 @@ Alur kerja keamanan dirancang untuk menggagalkan pipeline jika ditemukan risiko 
 4. **Push:** Mengirim image yang sudah tervalidasi ke Docker Hub.
 5. **Deploy:** Injeksi konfigurasi environment ke manifest Kubernetes (Namespace & Port) menggunakan `sed`.
 
-
+---
 
 ## 🛠️ Detail Environment
 
@@ -89,6 +90,8 @@ Alur kerja keamanan dirancang untuk menggagalkan pipeline jika ditemukan risiko 
 | **Namespace K8s** | `staging` | `default` |
 | **NodePort** | `30002` | `30001` |
 | **SonarCloud Project** | `kikyputraa_devops-playground` | `kikyputraa_devops-playground` |
+
+---
 
 ## ⚙️ Konfigurasi Secrets
 
