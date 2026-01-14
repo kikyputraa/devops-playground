@@ -3,7 +3,7 @@ WORKDIR /app
 
 # Perhatikan jalur 'app/' dibawah ini
 COPY app/requirements.txt .
-RUN pip install -r requirements.txt
+RUN pip install --upgrade pip setuptools && pip install -r requirements.txt
 
 COPY app/ .
 
