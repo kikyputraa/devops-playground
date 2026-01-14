@@ -3,7 +3,7 @@
 [![CI/CD Pipeline](https://github.com/kikyputraa/devops-playground/actions/workflows/pipeline.yml/badge.svg?branch=staging)](https://github.com/kikyputraa/devops-playground/actions/workflows/pipeline.yml)
 [![pipeline status](https://gitlab.com/kikyputraa/sast-test/badges/staging/pipeline.svg)](https://gitlab.com/kikyputraa/sast-test/-/commits/staging)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=kikyputraa_devops-playground&metric=alert_status)](https://sonarcloud.io/dashboard?id=kikyputraa_devops-playground)
-![Last Commit](https://img.shields.io/github/last-commit/kikyputraa/devops-playground)
+[![Last Commit](https://img.shields.io/github/last-commit/kikyputraa/devops-playground/staging)](https://github.com/kikyputraa/devops-playground/commits/staging)
 
 ![Python](https://img.shields.io/badge/python-3.9-slim)
 ![Docker](https://img.shields.io/badge/docker-enabled-blue)
@@ -91,12 +91,5 @@ Untuk menjalankan pipeline ini dengan sukses, pastikan variabel berikut telah di
 * `DOCKER_USER`: Username Docker Hub.
 * `DOCKER_PASSWORD`: Password atau Personal Access Token Docker Hub.
 
-## Output Pipeline dan Quality Check
-- **GitHub Actions Pipeline :**
-![alt text](<WhatsApp Image 2026-01-13 at 16.25.03.jpeg>)
-- **GitLab Pipeline :**
-![alt text](<WhatsApp Image 2026-01-13 at 16.25.54.jpeg>)
-- **SonarCloud Quality Analysis :**
-![alt text](<WhatsApp Image 2026-01-13 at 16.26.35.jpeg>)
 
 ---
