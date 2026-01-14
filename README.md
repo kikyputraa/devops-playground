@@ -7,7 +7,7 @@ Proyek ini mendemonstrasikan implementasi alur kerja **DevSecOps** modern untuk 
 ### 🏗️ Build & Deployment
 [![GitHub Pipeline](https://github.com/kikyputraa/devops-playground/actions/workflows/pipeline.yml/badge.svg?branch=staging)](https://github.com/kikyputraa/devops-playground/actions)
 [![GitLab Pipeline](https://gitlab.com/kikyputraa/sast-test/badges/staging/pipeline.svg)](https://gitlab.com/kikyputraa/sast-test/-/commits/staging)
-[![Docker Pulls](https://img.shields.io/docker/pulls/kikyputraa/devops-playground?label=Docker%20Pulls&logo=docker&logoColor=white)](https://hub.docker.com/r/kikyputraa/devops-playground)
+[![Docker Pulls](https://img.shields.io/docker/pulls/kikyputraa/devops-playground?style=flat&logo=docker&color=2496ed)](https://hub.docker.com/r/kikyputraa/devops-playground)
 [![Last Commit](https://img.shields.io/github/last-commit/kikyputraa/devops-playground/staging?logo=git)](https://github.com/kikyputraa/devops-playground/commits/staging)
 
 ### 🛡️ Security & Quality Gate
