@@ -8,11 +8,12 @@ WORKDIR /app
 RUN pip install --no-cache-dir --upgrade pip setuptools \
     && pip install --no-cache-dir "jaraco.context>=6.1.0"
 
-COPY requirements.txt .
+COPY app/requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
 EXPOSE 5000
-CMD ["python", "app.py"]
+
+CMD ["python", "app/app.py"]
