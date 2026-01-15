@@ -67,17 +67,19 @@ trivy_scan:
     - trivy image --input image.tar --severity HIGH,CRITICAL --exit-code 1 --ignore-unfixed --ignorefile .trivyignore
 
 # --- STAGE: PUSH ---
-push_job:
-  stage: push
-  image: docker:24.0.5
-  services: [docker:24.0.5-dind]
-  needs: [trivy_scan]
-  script:
-    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USER" --password-stdin
-    - docker load < image.tar
-    - docker push $DOCKER_IMAGE:$CI_COMMIT_SHORT_SHA
-    - docker tag $DOCKER_IMAGE:$CI_COMMIT_SHORT_SHA $DOCKER_IMAGE:latest
-    - docker push $DOCKER_IMAGE:latest
+push_image:
+    needs: [container_security]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Docker Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: docker-artifact # Nama harus sama persis dengan yang di upload
+      - name: Load and Push
+        run: |
+          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USER }}" --password-stdin
+          docker load < app_image.tar
+          docker push kikyputraa/devops-playground:${{ github.sha }}
 
 # --- STAGE: DEPLOY ---
 deploy_job:
