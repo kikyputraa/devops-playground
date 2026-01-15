@@ -62,7 +62,8 @@ trivy_scan:
   needs: [build_job]
   script:
     - trivy image --clear-cache
-    - trivy image --input image.tar --severity HIGH,CRITICAL --exit-code 1 --ignore-unfixed
+    # Menambahkan flag --ignorefile .trivyignore
+    - trivy image --input image.tar --severity HIGH,CRITICAL --exit-code 1 --ignore-unfixed --ignorefile .trivyignore
 
 # --- STAGE: PUSH ---
 push_job:
