@@ -5,52 +5,107 @@ on:
     branches: [ "staging", "main" ]
 
 jobs:
-  sast_and_tests:
+  # 1. SAST Bandit
+  sast_bandit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
-      - name: Unit Test & Coverage
+      - name: Run Bandit Scan
         run: |
-          pip install pytest pytest-cov bandit
-          pytest --cov=app --cov-report=xml tests/
+          pip install bandit
           bandit -r app/
+
+  # 2. Unit Testing
+  unit_test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run Pytest
+        run: |
+          pip install pytest pytest-cov
+          pytest --cov=app --cov-report=xml tests/
+      - name: Upload Coverage Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml
+          path: coverage.xml
+
+  # 3. SonarCloud Check
+  sonarqube_check:
+    needs: [unit_test]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Download Coverage Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-xml
       - name: SonarCloud Scan
         uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-      - name: Upload Coverage
-        uses: actions/upload-artifact@v4
-        with: { name: coverage-xml, path: coverage.xml }
 
-  build_and_security:
-    needs: sast_and_tests
+  # 4. Build Job
+  build_job:
+    needs: [sonarqube_check, sast_bandit]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - name: Build Docker Image
-        run: docker build -t kikyputraa/sast-scan-test:${{ github.sha }} .
-      - name: Trivy Scan
+        run: |
+          docker build -t kikyputraa/sast-scan-test:${{ github.sha }} .
+          docker save kikyputraa/sast-scan-test:${{ github.sha }} > app_image.tar
+      - name: Upload Image Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-image
+          path: app_image.tar
+
+  # 5. Security Check (Trivy)
+  trivy_scan:
+    needs: [build_job]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Image Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-image
+      - name: Load Image and Scan
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: 'kikyputraa/sast-scan-test:${{ github.sha }}'
+          input: 'app_image.tar'
           format: 'table'
           exit-code: '1'
           severity: 'CRITICAL,HIGH'
-      - name: Push to Docker Hub
+
+  # 6. Push Job
+  push_job:
+    needs: [trivy_scan]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download Image Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: app-image
+      - name: Login and Push to Docker Hub
         run: |
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USER }}" --password-stdin
+          docker load < app_image.tar
           docker push kikyputraa/sast-scan-test:${{ github.sha }}
           docker tag kikyputraa/sast-scan-test:${{ github.sha }} kikyputraa/sast-scan-test:latest
           docker push kikyputraa/sast-scan-test:latest
 
-  deploy_simulation:
-    needs: build_and_security
+  # 7. Deploy Job
+  deploy_job:
+    needs: [push_job]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Update K8s Manifests (Logic 15/01)
+      - name: Update Manifests Simulation
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             NAMESPACE="default"; PORT="30001"
@@ -60,4 +115,4 @@ jobs:
           sed -i "s|namespace:.*|namespace: $NAMESPACE|g" k8s/deployment.yaml
           sed -i "s|nodePort:.*|nodePort: $PORT|g" k8s/service.yml
           sed -i "s|image:.*|image: kikyputraa/sast-scan-test:${{ github.sha }}|g" k8s/deployment.yaml
-          echo "Verified for $NAMESPACE"
+          echo "Verified for $NAMESPACE on port $PORT"
