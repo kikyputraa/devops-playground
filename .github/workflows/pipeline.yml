@@ -15,12 +15,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - run: |
-          pip install pytest pytest-cov Flask
-          pytest --cov=app --cov-report=xml:coverage.xml tests/
-      - uses: actions/upload-artifact@v4
+      - name: Setup Python
+        uses: actions/setup-python@v4
         with:
-          name: coverage-report
+          python-version: '3.9'
+      - name: Install dependencies
+        run: pip install pytest pytest-cov Flask
+      - name: Run Test and Generate Coverage
+        # Kunci: --cov-report=xml:coverage.xml memaksa output ke root
+        run: |
+          pytest --cov=app --cov-report=xml:coverage.xml tests/
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-xml
           path: coverage.xml
 
   sonarqube_check:
@@ -28,10 +36,17 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
-      - uses: actions/download-artifact@v4
-        with: { name: coverage-report }
-      - uses: SonarSource/sonarcloud-github-action@master
+        with:
+          fetch-depth: 0
+      - name: Download Artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: coverage-xml
+      - name: Verify Coverage File
+        # Cek apakah filenya benar-benar ada sebelum scan
+        run: ls -la coverage.xml
+      - name: SonarCloud Scan
+        uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
