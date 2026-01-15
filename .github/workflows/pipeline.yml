@@ -87,5 +87,5 @@ jobs:
             NAMESPACE="staging"; PORT="30002"
           fi
           sed -i "s|namespace:.*|namespace: $NAMESPACE|g" k8s/deployment.yaml
-          sed -i "s|nodePort:.*|nodePort: $PORT|g" k8s/service.yml
+          sed -i "s|nodePort:.*|nodePort: $PORT|g" k8s/service.yaml
           sed -i "s|image:.*|image: kikyputraa/sast-scan-test:${{ github.sha }}|g" k8s/deployment.yaml

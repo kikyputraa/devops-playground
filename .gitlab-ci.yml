@@ -71,5 +71,5 @@ deploy_job:
     - |
       [[ "$CI_COMMIT_BRANCH" == "main" ]] && (NSP="default"; PT="30001") || (NSP="staging"; PT="30002")
       sed -i "s|namespace:.*|namespace: $NSP|g" k8s/deployment.yaml
-      sed -i "s|nodePort:.*|nodePort: $PT|g" k8s/service.yml
+      sed -i "s|nodePort:.*|nodePort: $PT|g" k8s/service.yaml
       sed -i "s|image:.*|image: $DOCKER_IMAGE:$IMAGE_TAG|g" k8s/deployment.yaml
