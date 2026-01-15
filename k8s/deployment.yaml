@@ -10,8 +10,8 @@ spec:
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxSurge: 1        
-      maxUnavailable: 0 
+      maxSurge: 1
+      maxUnavailable: 0
   selector:
     matchLabels:
       app: flask-web
@@ -21,13 +21,21 @@ spec:
         app: flask-web
     spec:
       automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 2000
       containers:
       - name: flask-app
         image: kikyputraa/devops-playground:latest
+        imagePullPolicy: Always
         ports:
         - containerPort: 5000
-        imagePullPolicy: Always
-        
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop:
+              - ALL
         readinessProbe:
           httpGet:
             path: /
@@ -40,7 +48,6 @@ spec:
             port: 5000
           initialDelaySeconds: 15
           periodSeconds: 10
-
         resources:
           requests:
             memory: "64Mi"

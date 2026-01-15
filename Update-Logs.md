@@ -11,3 +11,7 @@
 - (14/01) **Zero Downtime Strategy:** Applied a *Rolling Update* strategy to the Deployment configuration. This guarantees 100% service availability (zero downtime) during application updates by ensuring new pods are ready before old ones are terminated.
 - (14/01) **Enhanced Health Monitoring (Self-Healing):** Integrated *Liveness* and *Readiness Probes*. The system is now capable of detecting unhealthy pods and performing automatic restarts, while ensuring traffic is only routed to containers ready to serve requests.
 - (14/01) **Resource Quota & Optimization:** Established *CPU/Memory Requests* and *Limits* at the container level. This is crucial to prevent resource exhaustion and ensure long-term cluster stability.
+- (15/01) **Advanced Networking & Ingress Mastery:** Successfully implemented Nginx Ingress Controller for host-based routing via `flask.devops.local`.
+- (15/01) **WSL2-Windows Network Bridging:** Resolved complex network isolation issues by implementing `minikube tunnel` and local DNS loopback mapping, enabling seamless access from host browsers to the cluster.
+- (15/01) **Standardized Service Architecture:** Refactored service networking from `NodePort` to `ClusterIP` to enforce a centralized entry point through the Ingress gateway, enhancing security and traffic management.
+- (15/01) **Observability Foundation:** Initiated the deployment of the Prometheus & Grafana stack via Helm to establish a professional monitoring and alerting infrastructure.
