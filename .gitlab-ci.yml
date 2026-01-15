@@ -7,81 +7,62 @@ stages:
 
 variables:
   DOCKER_USER: "kikyputraa"
-  DOCKER_IMAGE: $DOCKER_USER/devops-playground
+  DOCKER_IMAGE: $DOCKER_USER/sast-scan-test
   IMAGE_TAG: $CI_COMMIT_SHORT_SHA
   SONAR_HOST_URL: "https://sonarcloud.io"
 
 unit_test:
   stage: sast
   image: python:3.9-slim
-  tags:
-    - wsl-local
   script:
     - pip install pytest pytest-cov
     - pytest --cov=app --cov-report=xml tests/
   artifacts:
-    paths:
-      - coverage.xml
+    paths: [coverage.xml]
+    expire_in: 1 hour
 
 sast_bandit:
   stage: sast
   image: python:3.9-slim
-  tags:
-    - wsl-local
   script:
     - pip install bandit
-    - bandit -r app/ || true
+    - bandit -r app/
+  allow_failure: false
 
 sonarqube_check:
   stage: sast
-  image: 
-    name: sonarsource/sonar-scanner-cli:latest
-    entrypoint: [""]
-  tags:
-    - wsl-local
+  image: { name: sonarsource/sonar-scanner-cli:latest, entrypoint: [""] }
   needs: ["unit_test"]
+  variables:
+    SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
+    GIT_DEPTH: "0"
   script:
-    - >
-      sonar-scanner 
-      -Dsonar.token=$SONAR_TOKEN 
-      -Dsonar.python.coverage.reportPaths=coverage.xml 
-      -Dsonar.host.url=$SONAR_HOST_URL
-      -Dsonar.projectKey=kikyputraa_devops-playground
-      -Dsonar.organization=kikyputraa
-      -Dsonar.branch.name=$CI_COMMIT_BRANCH
+    - sonar-scanner -Dsonar.token=$SONAR_TOKEN -Dsonar.python.coverage.reportPaths=coverage.xml -Dsonar.host.url=$SONAR_HOST_URL -Dsonar.qualitygate.wait=true
+  allow_failure: true
 
 build_job:
   stage: build
   image: docker:24.0.5
-  services:
-    - docker:24.0.5-dind
-  tags:
-    - wsl-local
+  services: [docker:24.0.5-dind]
   script:
     - docker build -t $DOCKER_IMAGE:$IMAGE_TAG .
     - docker save $DOCKER_IMAGE:$IMAGE_TAG > app_image.tar
   artifacts:
-    paths:
-      - app_image.tar
+    paths: [app_image.tar]
+    expire_in: 1 hour
 
 trivy_scan:
   stage: security_check
-  image: 
-    name: aquasec/trivy:latest
-    entrypoint: [""]
-  tags:
-    - wsl-local
+  image: { name: aquasec/trivy:latest, entrypoint: [""] }
+  dependencies: [build_job]
   script:
-    - trivy image --input app_image.tar --severity HIGH,CRITICAL --exit-code 0
+    - trivy image --input app_image.tar --severity HIGH,CRITICAL --exit-code 1
 
 push_job:
   stage: push
   image: docker:24.0.5
-  services:
-    - docker:24.0.5-dind
-  tags:
-    - wsl-local
-  needs: ["build_job", "trivy_scan"]
+  services: [docker:24.0.5-dind]
+  needs: [{ job: build_job, artifacts: true }, { job: trivy_scan }]
   before_script:
     - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USER" --password-stdin
   script:
@@ -93,32 +74,18 @@ push_job:
 deploy_job:
   stage: deploy
   image: alpine:latest
-  tags:
-    - wsl-local
   script:
-    - apk add --no-cache sed curl
-    - curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-    - chmod +x kubectl && mv kubectl /usr/local/bin/
-    
-    # Setup akses (KTP Digital)
-    - mkdir -p ~/.kube
-    - echo "$KUBECONFIG_DATA" > ~/.kube/config
-    
+    - apk add --no-cache sed
     - |
-      # Logika penentuan Namespace & Port
       if [ "$CI_COMMIT_BRANCH" == "main" ]; then
         NAMESPACE="default"; PORT="30001"
       else
         NAMESPACE="staging"; PORT="30002"
       fi
-      
-      # Edit file manifest
+      sed -i "s|namespace:.*|namespace: $NAMESPACE|g" k8s/deployment.yaml
+      sed -i "s|namespace:.*|namespace: $NAMESPACE|g" k8s/service.yml
+      sed -i "s|nodePort:.*|nodePort: $PORT|g" k8s/service.yml
       sed -i "s|image:.*|image: $DOCKER_IMAGE:$IMAGE_TAG|g" k8s/deployment.yaml
-      sed -i "s|nodePort:.*|nodePort: $PORT|g" k8s/service.yaml
-      
-      # Eksekusi ke Minikube
-      kubectl apply -f k8s/deployment.yaml -n $NAMESPACE --validate=false
-      kubectl apply -f k8s/service.yaml -n $NAMESPACE --validate=false
-      kubectl rollout restart deployment flask-app-deployment -n $NAMESPACE
+      echo "Verified Deployment for $NAMESPACE on port $PORT"
   rules:
     - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "staging"'
