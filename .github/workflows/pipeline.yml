@@ -9,24 +9,18 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Bandit Scan
-        run: |
-          pip install bandit
-          bandit -r app/
+      - run: pip install bandit && bandit -r app/
 
   unit_test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Install dependencies
-        run: pip install pytest pytest-cov Flask
-      - name: Run Tests
-        # --cov=app artinya scan coverage di folder app
-        run: pytest --cov=app --cov-report=xml tests/
-      - name: Upload Coverage
-        uses: actions/upload-artifact@v4
+      - run: |
+          pip install pytest pytest-cov Flask
+          pytest --cov=app --cov-report=xml:coverage.xml tests/
+      - uses: actions/upload-artifact@v4
         with:
-          name: coverage-artifact
+          name: coverage-report
           path: coverage.xml
 
   sonarqube_check:
@@ -34,44 +28,35 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-      - name: Download Coverage
-        uses: actions/download-artifact@v4
-        with:
-          name: coverage-artifact
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
+        with: { fetch-depth: 0 }
+      - uses: actions/download-artifact@v4
+        with: { name: coverage-report }
+      - uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          
+
   build_job:
     needs: [sonarqube_check, sast_bandit]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build and Save Image
+      - name: Build Image
         run: |
-          docker build -t kikyputraa/sast-scan-test:${{ github.sha }} .
-          docker save kikyputraa/sast-scan-test:${{ github.sha }} > app_image.tar
-      - name: Upload Image
-        uses: actions/upload-artifact@v4
-        with:
-          name: app-image
-          path: app_image.tar
+          # GANTI KE IMAGE BARU
+          docker build -t kikyputraa/devops-playground:${{ github.sha }} .
+          docker save kikyputraa/devops-playground:${{ github.sha }} > app_image.tar
+      - uses: actions/upload-artifact@v4
+        with: { name: app-image, path: app_image.tar }
 
   security_check:
     needs: [build_job]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Download Image
-        uses: actions/download-artifact@v4
-        with:
-          name: app-image
-      - name: Trivy Scan
-        uses: aquasecurity/trivy-action@master
+      - uses: actions/download-artifact@v4
+        with: { name: app-image }
+      - uses: aquasecurity/trivy-action@master
         with:
           input: 'app_image.tar'
           format: 'table'
@@ -85,26 +70,24 @@ jobs:
     needs: [security_check]
     runs-on: ubuntu-latest
     steps:
-      - name: Download Image
-        uses: actions/download-artifact@v4
-        with:
-          name: app-image
-      - name: Login and Push
-        run: |
+      - uses: actions/download-artifact@v4
+        with: { name: app-image }
+      - run: |
           echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USER }}" --password-stdin
           docker load < app_image.tar
-          docker push kikyputraa/sast-scan-test:${{ github.sha }}
-          docker tag kikyputraa/sast-scan-test:${{ github.sha }} kikyputraa/sast-scan-test:latest
-          docker push kikyputraa/sast-scan-test:latest
+          # PUSH KE IMAGE BARU
+          docker push kikyputraa/devops-playground:${{ github.sha }}
+          docker tag kikyputraa/devops-playground:${{ github.sha }} kikyputraa/devops-playground:latest
+          docker push kikyputraa/devops-playground:latest
 
   deploy_job:
     needs: [push_job]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Manifest Update
-        run: |
+      - run: |
           [[ "${{ github.ref }}" == "refs/heads/main" ]] && (NSP="default"; PT="30001") || (NSP="staging"; PT="30002")
           sed -i "s|namespace:.*|namespace: $NSP|g" k8s/deployment.yaml
           sed -i "s|nodePort:.*|nodePort: $PT|g" k8s/service.yaml
-          sed -i "s|image:.*|image: kikyputraa/sast-scan-test:${{ github.sha }}|g" k8s/deployment.yaml
+          # UPDATE IMAGE DI MANIFEST
+          sed -i "s|image:.*|image: kikyputraa/devops-playground:${{ github.sha }}|g" k8s/deployment.yaml

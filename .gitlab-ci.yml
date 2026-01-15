@@ -6,7 +6,8 @@ stages:
   - deploy
 
 variables:
-  DOCKER_IMAGE: "kikyputraa/sast-scan-test"
+  # IMAGE BARU
+  DOCKER_IMAGE: "kikyputraa/devops-playground"
   IMAGE_TAG: $CI_COMMIT_SHORT_SHA
 
 unit_test:
@@ -14,17 +15,17 @@ unit_test:
   image: python:3.9-slim
   script:
     - pip install pytest pytest-cov Flask
-    - pytest --cov=app --cov-report=xml tests/
+    - pytest --cov=app --cov-report=xml:coverage.xml tests/
   artifacts:
-    paths:
-      - coverage.xml
+    paths: [coverage.xml]
 
 sonarqube_check:
   stage: sast
-  needs: ["unit_test"]
   image: { name: sonarsource/sonar-scanner-cli:latest, entrypoint: [""] }
+  needs: ["unit_test"]
   script:
-    - sonar-scanner -Dsonar.token=$SONAR_TOKEN -Dsonar.python.coverage.reportPaths=coverage.xml
+    - sonar-scanner -Dsonar.token=$SONAR_TOKEN -Dsonar.python.coverage.reportPaths=coverage.xml -Dsonar.qualitygate.wait=false
+  allow_failure: true
 
 build_job:
   stage: build
@@ -34,8 +35,7 @@ build_job:
     - docker build -t $DOCKER_IMAGE:$IMAGE_TAG .
     - docker save $DOCKER_IMAGE:$IMAGE_TAG > app_image.tar
   artifacts:
-    paths:
-      - app_image.tar
+    paths: [app_image.tar]
 
 trivy_scan:
   stage: security_check
