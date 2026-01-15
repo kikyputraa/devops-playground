@@ -34,6 +34,7 @@ jobs:
       - name: Run Bandit
         run: |
           pip install bandit
+          # Menggunakan nosec di app.py sudah benar, atau jalankan ini:
           bandit -r app/
 
   sonarqube_check:
@@ -112,7 +113,7 @@ jobs:
           docker tag ${{ env.DOCKER_IMAGE }}:${{ github.sha }} ${{ env.DOCKER_IMAGE }}:latest
           docker push ${{ env.DOCKER_IMAGE }}:latest
 
-deploy_job:
+  deploy_job:
     needs: push_job
     runs-on: ubuntu-latest
     steps:
@@ -126,16 +127,15 @@ deploy_job:
             NAMESPACE="staging"
             PORT="30002"
           fi
-          # Perbaikan sed untuk deployment dan service
           sed -i "s|namespace:.*|namespace: $NAMESPACE|g" k8s/deployment.yaml
           sed -i "s|namespace:.*|namespace: $NAMESPACE|g" k8s/service.yaml
           sed -i "s|nodePort:.*|nodePort: $PORT|g" k8s/service.yaml
           sed -i "s|image:.*|image: ${{ env.DOCKER_IMAGE }}:${{ github.sha }}|g" k8s/deployment.yaml
 
-      # TAMBAHKAN LANGKAH INI untuk koneksi ke Minikube Anda
       - name: Deploy to Kubernetes
         run: |
-          # Perintah ini mengasumsikan runner Anda punya akses ke cluster (KUBECONFIG)
+          # Catatan: Perintah ini akan gagal jika runner GitHub tidak punya akses ke Minikube Anda.
+          # Jika Anda pakai Self-hosted runner di PC yang sama, ini akan jalan.
           kubectl apply -f k8s/deployment.yaml
           kubectl apply -f k8s/service.yaml
           kubectl rollout restart deployment flask-app-deployment -n staging
