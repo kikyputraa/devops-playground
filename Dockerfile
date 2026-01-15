@@ -3,7 +3,6 @@ FROM python:3.9-slim
 ENV PYTHONDONTWRITEBYTECODE=1
 ENV PYTHONUNBUFFERED=1
 
-# Menggunakan apt-get karena python:3.9-slim berbasis Debian
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     libc6-dev \
@@ -11,19 +10,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /app
 
-# Upgrade tools utama dan paksa install versi jaraco.context yang aman dari CVE
-RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+# Upgrade pip & kawan-kawan
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
+
+# JURUS PAMUNGKAS: Hapus folder metadata jaraco lama jika ada, lalu install versi aman
+RUN pip uninstall -y jaraco.context && \
     pip install --no-cache-dir "jaraco.context>=6.1.0"
 
-# Install requirements dengan flag upgrade agar tidak menimpa versi aman di atas
 COPY app/requirements.txt .
-RUN pip install --no-cache-dir --upgrade -r requirements.txt
+RUN pip install --no-cache-dir -r requirements.txt
 
-# Pastikan lagi jaraco tetap di versi terbaru setelah install requirements
-RUN pip install --no-cache-dir "jaraco.context>=6.1.0"
+# Pastikan lagi setelah install requirements, versi aman yang menang
+RUN pip install --no-cache-dir --upgrade "jaraco.context>=6.1.0"
 
 COPY app/ .
-
 EXPOSE 5000
-
 CMD ["python", "app.py"]

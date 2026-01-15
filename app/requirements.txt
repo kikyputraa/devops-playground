@@ -1,2 +1,5 @@
-Flask==2.3.2
-jaraco.context>=6.1.0
+Flask==2.3.3
+pytest==7.4.2
+pytest-cov==4.1.0
+bandit==1.7.5
+# Jangan masukkan jaraco.context di sini, biar kita handle di Dockerfile
