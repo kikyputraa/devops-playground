@@ -8,7 +8,7 @@ stages:
 
 variables:
   DOCKER_IMAGE: "kikyputraa/devops-playground"
-  GIT_DEPTH: "0"
+  GIT_DEPTH: "0" # Wajib untuk Sonar agar bisa baca history git
 
 # --- STAGE: SAST ---
 sast_bandit:
@@ -16,7 +16,7 @@ sast_bandit:
   image: python:3.11-slim
   script:
     - pip install bandit
-    - bandit -r app/ -ll # -ll agar tidak exit code 1 pada isu Medium/Low
+    - bandit -r app/ -ll
 
 # --- STAGE: TEST ---
 unit_test:
@@ -40,15 +40,15 @@ sonarqube_check:
     - sonar-scanner 
       -Dsonar.token=$SONAR_TOKEN 
       -Dsonar.python.coverage.reportPaths=coverage.xml 
-      -Dsonar.python.version=3.9
+      -Dsonar.python.version=3.11
 
 # --- STAGE: BUILD ---
 build_job:
   stage: build
   image: docker:24.0.5
-  services: [docker:24.0.5-dind]
+  services:
+    - docker:24.0.5-dind
   script:
-    # Membangun image dan menyimpannya sebagai file tar untuk discan Trivy
     - docker build -t $DOCKER_IMAGE:$CI_COMMIT_SHORT_SHA .
     - docker save $DOCKER_IMAGE:$CI_COMMIT_SHORT_SHA > image.tar
   artifacts:
@@ -61,25 +61,22 @@ trivy_scan:
   image: { name: aquasec/trivy:latest, entrypoint: [""] }
   needs: [build_job]
   script:
-    # PERBAIKAN: Perintah baru untuk hapus cache di Trivy versi terbaru
     - trivy clean --scan-cache
-    # Gunakan --ignore-unfixed dan pastikan file .trivyignore ada di root repo kamu
     - trivy image --input image.tar --severity HIGH,CRITICAL --exit-code 1 --ignore-unfixed --ignorefile .trivyignore
 
 # --- STAGE: PUSH ---
-push_image:
-    needs: [container_security]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Download Docker Artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: docker-artifact # Nama harus sama persis dengan yang di upload
-      - name: Load and Push
-        run: |
-          echo "${{ secrets.DOCKER_PASSWORD }}" | docker login -u "${{ secrets.DOCKER_USER }}" --password-stdin
-          docker load < app_image.tar
-          docker push kikyputraa/devops-playground:${{ github.sha }}
+push_job:
+  stage: push
+  image: docker:24.0.5
+  services:
+    - docker:24.0.5-dind
+  needs: [trivy_scan, build_job]
+  script:
+    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USER" --password-stdin
+    - docker load < image.tar
+    - docker push $DOCKER_IMAGE:$CI_COMMIT_SHORT_SHA
+    - docker tag $DOCKER_IMAGE:$CI_COMMIT_SHORT_SHA $DOCKER_IMAGE:latest
+    - docker push $DOCKER_IMAGE:latest
 
 # --- STAGE: DEPLOY ---
 deploy_job:
