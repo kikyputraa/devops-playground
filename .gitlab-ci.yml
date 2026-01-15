@@ -8,7 +8,7 @@ stages:
 
 variables:
   DOCKER_IMAGE: "kikyputraa/devops-playground"
-  GIT_DEPTH: "0" # Memperbaiki warning Shallow Clone di SonarCloud
+  GIT_DEPTH: "0"
 
 # --- STAGE: SAST ---
 sast_bandit:
@@ -61,8 +61,9 @@ trivy_scan:
   image: { name: aquasec/trivy:latest, entrypoint: [""] }
   needs: [build_job]
   script:
-    - trivy image --clear-cache
-    # Menambahkan flag --ignorefile .trivyignore
+    # PERBAIKAN: Perintah baru untuk hapus cache di Trivy versi terbaru
+    - trivy clean --scan-cache
+    # Gunakan --ignore-unfixed dan pastikan file .trivyignore ada di root repo kamu
     - trivy image --input image.tar --severity HIGH,CRITICAL --exit-code 1 --ignore-unfixed --ignorefile .trivyignore
 
 # --- STAGE: PUSH ---
