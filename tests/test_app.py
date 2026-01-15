@@ -10,9 +10,9 @@ def client():
 def test_index(client):
     res = client.get('/')
     assert res.status_code == 200
-    # Cek apakah teks 'DevOps Playground' muncul di response
     assert b"DevOps Playground" in res.data
 
 def test_health(client):
     res = client.get('/health')
     assert res.status_code == 200
+    assert res.get_json() == {"status": "ok"}

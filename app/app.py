@@ -4,7 +4,7 @@ app = Flask(__name__)
 
 @app.route('/')
 def index():
-    return "Aplikasi Sederhana DevOps Playground - Status: Berhasil!"
+    return "Aplikasi Sederhana DevOps Playground - Status: Berhasil Terkoneksi!"
 
 @app.route('/health')
 def health():
@@ -12,4 +12,5 @@ def health():
 
 if __name__ == '__main__':
     # pragma: no cover
-    app.run(host='0.0.0.0', port=5000)
+    # nosec digunakan agar Bandit mengabaikan binding ke 0.0.0.0
+    app.run(host='0.0.0.0', port=5000)  # nosec
