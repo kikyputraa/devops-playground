@@ -8,7 +8,7 @@ stages:
 
 variables:
   DOCKER_IMAGE: "kikyputraa/devops-playground"
-  GIT_DEPTH: "0" # Fix Shallow Clone
+  GIT_DEPTH: "0"
 
 sast_bandit:
   stage: sast
@@ -32,7 +32,10 @@ sonarqube_check:
   image: { name: sonarsource/sonar-scanner-cli:latest, entrypoint: [""] }
   needs: [unit_test]
   script:
-    - sonar-scanner -Dsonar.token=$SONAR_TOKEN -Dsonar.python.coverage.reportPaths=coverage.xml -Dsonar.python.version=3.9
+    - sonar-scanner 
+      -Dsonar.token=$SONAR_TOKEN 
+      -Dsonar.python.coverage.reportPaths=coverage.xml 
+      -Dsonar.python.version=3.9
 
 build_job:
   stage: build
@@ -49,7 +52,7 @@ trivy_scan:
   image: { name: aquasec/trivy:latest, entrypoint: [""] }
   needs: [build_job]
   script:
-    - trivy image --input image.tar --severity HIGH,CRITICAL --exit-code 1
+    - trivy image --input image.tar --severity HIGH,CRITICAL --exit-code 1 --ignore-unfixed
 
 push_job:
   stage: push

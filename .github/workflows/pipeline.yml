@@ -12,7 +12,7 @@ jobs:
       - name: Bandit Security Scan
         run: |
           pip install bandit
-          # Menggunakan -ll agar pipeline tidak stop pada isu Medium
+          # Menggunakan -ll agar pipeline tidak stop pada isu Medium (seperti binding 0.0.0.0)
           bandit -r app/ -ll
 
   unit_test:
@@ -35,7 +35,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # Fix Shallow Clone Warning
+          fetch-depth: 0 # Penting untuk akurasi data SonarCloud
       - uses: actions/download-artifact@v4
         with:
           name: coverage-report
@@ -72,6 +72,7 @@ jobs:
           input: 'app_image.tar'
           severity: 'CRITICAL,HIGH'
           exit-code: '1'
+          ignore-unfixed: true # Agar tidak gagal pada celah yang belum ada patch resminya
 
   push_image:
     needs: [container_security]
@@ -95,7 +96,11 @@ jobs:
       - uses: actions/checkout@v4
       - name: Update K8s Manifests
         run: |
-          [[ "${{ github.ref }}" == "refs/heads/main" ]] && (NSP="default"; PT="30001") || (NSP="staging"; PT="30002")
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            NSP="default"; PT="30001"
+          else
+            NSP="staging"; PT="30002"
+          fi
           sed -i "s|namespace:.*|namespace: $NSP|g" k8s/deployment.yaml
           sed -i "s|nodePort:.*|nodePort: $PT|g" k8s/service.yaml
           sed -i "s|image:.*|image: kikyputraa/devops-playground:${{ github.sha }}|g" k8s/deployment.yaml

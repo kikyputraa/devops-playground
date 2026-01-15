@@ -12,5 +12,4 @@ def health():
 
 if __name__ == '__main__':
     # pragma: no cover
-    # nosec digunakan agar Bandit mengabaikan binding ke 0.0.0.0
     app.run(host='0.0.0.0', port=5000)  # nosec
