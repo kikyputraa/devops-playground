@@ -4,10 +4,10 @@ metadata:
   name: flask-app-service
   namespace: staging
 spec:
-  type: ClusterIP # Diubah dari NodePort agar lebih secure
+  type: ClusterIP 
   selector:
     app: flask-web
   ports:
     - protocol: TCP
-      port: 80         # Port yang dipanggil oleh Ingress
-      targetPort: 5000 # Port aplikasi di dalam Container
+      port: 80         
+      targetPort: 5000 

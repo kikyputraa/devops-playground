@@ -128,8 +128,8 @@ jobs:
           fi
           # Update Namespace, NodePort, and Image Tag
           sed -i "s|namespace:.*|namespace: $NAMESPACE|g" k8s/deployment.yaml
-          sed -i "s|namespace:.*|namespace: $NAMESPACE|g" k8s/service.yml
-          sed -i "s|nodePort:.*|nodePort: $PORT|g" k8s/service.yml
+          sed -i "s|namespace:.*|namespace: $NAMESPACE|g" k8s/service.yaml
+          sed -i "s|nodePort:.*|nodePort: $PORT|g" k8s/service.yaml
           sed -i "s|image:.*|image: ${{ env.DOCKER_IMAGE }}:${{ github.sha }}|g" k8s/deployment.yaml
       - name: Archive K8s Manifests
         uses: actions/upload-artifact@v4
