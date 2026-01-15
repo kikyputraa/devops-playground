@@ -9,7 +9,6 @@ env:
   DOCKER_IMAGE: "kikyputraa/devops-playground"
 
 jobs:
-  # 1. UNIT TESTING
   unit_test:
     runs-on: ubuntu-latest
     steps:
@@ -28,7 +27,6 @@ jobs:
           name: coverage-report
           path: coverage.xml
 
-  # 2. SAST SCAN (BANDIT)
   sast_bandit:
     runs-on: ubuntu-latest
     steps:
@@ -36,9 +34,8 @@ jobs:
       - name: Run Bandit
         run: |
           pip install bandit
-          bandit -r app/ || true  # Bypass agar pipeline tidak stop jika ada temuan medium
+          bandit -r app/ || true
 
-  # 3. SONARCLOUD SCAN (Ini yang Anda tanyakan)
   sonarqube_check:
     needs: unit_test
     runs-on: ubuntu-latest
@@ -63,7 +60,6 @@ jobs:
             -Dsonar.python.coverage.reportPaths=coverage.xml
             -Dsonar.sources=app
 
-  # 4. BUILD IMAGE
   build_job:
     needs: [sast_bandit, sonarqube_check]
     runs-on: ubuntu-latest
@@ -79,7 +75,6 @@ jobs:
           name: docker-image
           path: app_image.tar
 
-  # 5. SECURITY SCAN (TRIVY) - UPDATE: exit-code 0
   security_check:
     needs: build_job
     runs-on: ubuntu-latest
@@ -95,11 +90,10 @@ jobs:
         with:
           image-ref: '${{ env.DOCKER_IMAGE }}:${{ github.sha }}'
           format: 'table'
-          exit-code: '0'  # FIXED: Sekarang bypass jaraco.context sukses
+          exit-code: '0' 
           ignore-unfixed: true
           severity: 'CRITICAL,HIGH'
 
-  # 6. PUSH TO DOCKER HUB
   push_job:
     needs: security_check
     runs-on: ubuntu-latest
@@ -120,18 +114,26 @@ jobs:
           docker tag ${{ env.DOCKER_IMAGE }}:${{ github.sha }} ${{ env.DOCKER_IMAGE }}:latest
           docker push ${{ env.DOCKER_IMAGE }}:latest
 
-  # 7. DEPLOYMENT
   deploy_job:
     needs: push_job
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      
+      - name: Set up Kubectl
+        uses: azure/k8s-set-context@v3
+        with:
+          method: kubeconfig
+          kubeconfig: ${{ secrets.KUBE_CONFIG }}
+
       - name: Update Manifests
         run: |
           NAMESPACE="${{ github.ref_name == 'main' && 'default' || 'staging' }}"
           sed -i "s|image:.*|image: ${{ env.DOCKER_IMAGE }}:${{ github.sha }}|g" k8s/deployment.yaml
+          
       - name: Deploy to Kubernetes
         run: |
-          # Pastikan Runner memiliki akses kubectl ke cluster Anda
-          kubectl apply -f k8s/deployment.yaml -n ${{ github.ref_name == 'main' && 'default' || 'staging' }}
-          kubectl rollout restart deployment flask-app-deployment -n ${{ github.ref_name == 'main' && 'default' || 'staging' }}
+          NAMESPACE="${{ github.ref_name == 'main' && 'default' || 'staging' }}"
+          kubectl apply -f k8s/deployment.yaml -n $NAMESPACE
+          kubectl apply -f k8s/service.yaml -n $NAMESPACE
+          kubectl rollout restart deployment flask-app-deployment -n $NAMESPACE

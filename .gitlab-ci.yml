@@ -29,10 +29,10 @@ sast_bandit:
   image: python:3.9-slim
   script:
     - pip install bandit
-    - bandit -r app/ || true  # Bypass jika ada temuan medium
+    - bandit -r app/ || true 
   allow_failure: true
 
-# 3. SONARCLOUD SCAN (Ini yang Anda cari)
+# 3. SONARCLOUD SCAN
 sonarqube_check:
   stage: sast
   image: 
@@ -69,7 +69,7 @@ build_job:
       - app_image.tar
     expire_in: 1 hour
 
-# 5. TRIVY SCAN (Ditingkatkan ke exit-code 0 agar Sukses)
+# 5. TRIVY SCAN
 trivy_scan:
   stage: security_check
   image: 
@@ -99,7 +99,7 @@ push_job:
     - docker tag $DOCKER_IMAGE:$IMAGE_TAG $DOCKER_IMAGE:latest
     - docker push $DOCKER_IMAGE:latest
 
-# 7. DEPLOY TO K8S
+# 7. DEPLOY TO K8S (FIXED CONNECTION)
 deploy_job:
   stage: deploy
   image: alpine:latest
@@ -107,14 +107,24 @@ deploy_job:
     - apk add --no-cache sed curl
     - curl -LO "https://dl.k8s.io/release/$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
     - chmod +x kubectl && mv kubectl /usr/local/bin/
+    
+    # Tambahkan konfigurasi Kubeconfig dari Variable CI/CD
+    - mkdir -p ~/.kube
+    - cp "$KUBECONFIG_DATA" ~/.kube/config
+    
     - |
       if [ "$CI_COMMIT_BRANCH" == "main" ]; then
         NAMESPACE="default"
       else
         NAMESPACE="staging"
       fi
+      
+      # Update manifest
       sed -i "s|image:.*|image: $DOCKER_IMAGE:$IMAGE_TAG|g" k8s/deployment.yaml 
+      
+      # Gunakan --kubeconfig jika perlu, atau pastikan context sudah benar
       kubectl apply -f k8s/deployment.yaml -n $NAMESPACE
+      kubectl apply -f k8s/service.yaml -n $NAMESPACE
       kubectl rollout restart deployment flask-app-deployment -n $NAMESPACE
   rules:
     - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "staging"'
