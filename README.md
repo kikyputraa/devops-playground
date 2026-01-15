@@ -13,7 +13,7 @@ This project demonstrates the implementation of a modern **DevSecOps** workflow 
 | **Git Activity** | [![Last Commit](https://img.shields.io/github/last-commit/kikyputraa/devops-playground/staging?style=flat&logo=git&logoColor=white)](https://github.com/kikyputraa/devops-playground/commits/staging) | `Staging Branch` |
 
 ### 🛡️ Security & Quality Gate
-> Integrasi **SAST** (Static Application Security Testing) dan **SCA** (Software Composition Analysis).
+> **SAST** (Static Application Security Testing) and **SCA** (Software Composition Analysis) Integrations.
 
 * **Code Quality:** [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=kikyputraa_devops-playground&metric=alert_status)](https://sonarcloud.io/dashboard?id=kikyputraa_devops-playground)
 * **Security Scan:** [![Vulnerabilities](https://sonarcloud.io/api/project_badges/measure?project=kikyputraa_devops-playground&metric=vulnerabilities)](https://sonarcloud.io/summary/new_code?id=kikyputraa_devops-playground)
