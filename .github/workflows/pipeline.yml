@@ -18,11 +18,12 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Pytest with Coverage
-        run: |
-          pip install pytest pytest-cov Flask
-          pytest --cov=app --cov-report=xml tests/
-      - name: Upload Coverage for Sonar
+      - name: Install dependencies
+        run: pip install pytest pytest-cov Flask
+      - name: Run Tests
+        # --cov=app artinya scan coverage di folder app
+        run: pytest --cov=app --cov-report=xml tests/
+      - name: Upload Coverage
         uses: actions/upload-artifact@v4
         with:
           name: coverage-artifact
@@ -44,7 +45,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-
+          
   build_job:
     needs: [sonarqube_check, sast_bandit]
     runs-on: ubuntu-latest

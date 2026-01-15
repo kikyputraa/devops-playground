@@ -18,15 +18,13 @@ unit_test:
   artifacts:
     paths:
       - coverage.xml
-    expire_in: 1 hour
 
 sonarqube_check:
   stage: sast
-  image: { name: sonarsource/sonar-scanner-cli:latest, entrypoint: [""] }
   needs: ["unit_test"]
+  image: { name: sonarsource/sonar-scanner-cli:latest, entrypoint: [""] }
   script:
-    - sonar-scanner -Dsonar.token=$SONAR_TOKEN -Dsonar.python.coverage.reportPaths=coverage.xml -Dsonar.qualitygate.wait=false
-  allow_failure: true
+    - sonar-scanner -Dsonar.token=$SONAR_TOKEN -Dsonar.python.coverage.reportPaths=coverage.xml
 
 build_job:
   stage: build
