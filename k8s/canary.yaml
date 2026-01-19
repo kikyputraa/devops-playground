@@ -20,6 +20,18 @@ spec:
         env:
         - name: APP_VERSION
           value: "V2-CANARY-NEW-FEATURE"
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "64Mi"
+          limits:
+            cpu: "100m"
+            memory: "128Mi"
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 5000
+          initialDelaySeconds: 10
         ports:
         - containerPort: 5000
 ---

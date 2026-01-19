@@ -3,10 +3,18 @@ kind: Ingress
 metadata:
   name: flask-ingress-canary 
   annotations:
-    nginx.ingress.kubernetes.io/canary: "true"
-    nginx.ingress.kubernetes.io/canary-weight: "50"
+    kubernetes.io/ingress.class: nginx
+    # 1. Matikan fitur canary (Blue-Green Switch ke 100%)
+    nginx.ingress.kubernetes.io/canary: "false"
+    # 2. Tambahkan redirect otomatis dari HTTP ke HTTPS
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
 spec:
   ingressClassName: nginx
+  # 3. Tambahkan blok TLS di sini
+  tls:
+  - hosts:
+    - flask.devops.local
+    secretName: flask-tls-secret
   rules:
   - host: flask.devops.local
     http:
