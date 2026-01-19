@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: flask-app
-        image: kikyputraa/devops-playground:6bf922ee1638d5f8c01beae91d311c8725fe1e61
+        image: kikyputraa/devops-playground:1ed81949e94c362a73db685913aa4d5aa51bed18
         resources:
           requests:
             cpu: "50m"
