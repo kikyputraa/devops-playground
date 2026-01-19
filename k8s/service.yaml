@@ -10,4 +10,4 @@ spec:
     - protocol: TCP
       port: 80
       targetPort: 5000
-      nodePort: 30001 # Akan diganti otomatis menjadi 30001 (main) atau 30002 (staging)
+      nodePort: 30002
