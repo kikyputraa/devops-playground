@@ -9,7 +9,7 @@ This project demonstrates the implementation of a modern **DevSecOps** workflow 
 | :--- | :--- | :--- |
 | **GitLab CI/CD** | [![GitLab Pipeline](https://img.shields.io/gitlab/pipeline-status/kikyputraa/sast-test?branch=staging&label=GitLab%20Pipeline&logo=gitlab&color=orange)](https://gitlab.com/kikyputraa/sast-test/-/pipelines) | `Primary Pipeline (Staging)` |
 | **GitHub Actions** | [![GitHub Pipeline](https://img.shields.io/github/actions/workflow/status/kikyputraa/devops-playground/pipeline.yml?branch=staging&label=GitHub%20Actions%20Pipeline&logo=github)](https://github.com/kikyputraa/devops-playground/actions) | `Secondary Pipeline (Sync)` |
-| **ArgoCD** | ![ArgoCD](https://img.shields.io/badge/ArgoCD-Synced-success?style=flat&logo=argo&logoColor=orange) | `GitOps Implementation` |
+| **ArgoCD** | [![ArgoCD](https://img.shields.io/badge/ArgoCD-Synced-success?style=flat&logo=argo&logoColor=orange)](https://github.com/kikyputraa/devops-playground/tree/main/k8s) | `GitOps Implementation` |
 | **Docker Hub** | [![Docker Pulls](https://img.shields.io/docker/pulls/kikyputraa/devops-playground?style=flat&logo=docker&color=2496ed)](https://hub.docker.com/r/kikyputraa/devops-playground) | `Container Registry` |
 | **Git Activity** | [![Last Commit](https://img.shields.io/github/last-commit/kikyputraa/devops-playground/staging?style=flat&logo=git&logoColor=white)](https://github.com/kikyputraa/devops-playground/commits/staging) | `Latest Updates` |
 
