@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-production
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: flask-app
+      release: stable
+  template:
+    metadata:
+      labels:
+        app: flask-app
+        release: stable
+    spec:
+      containers:
+      - name: flask-app
+        image: kikyputraa/devops-playground:latest
+        env:
+        - name: APP_VERSION
+          value: "V1-STABLE"
+        ports:
+        - containerPort: 5000
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: flask-service-stable
+spec:
+  selector:
+    app: flask-app
+    release: stable
+  ports:
+  - port: 80
+    targetPort: 5000 #nosec
