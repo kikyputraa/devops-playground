@@ -1,3 +1,6 @@
 # Mengabaikan folder hasil scan (jika ada)
 .sonar/
 .scannerwork/
+.trivyignore
+cloudflare.deb
+logs.txt
