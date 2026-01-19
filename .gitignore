@@ -3,3 +3,5 @@
 .scannerwork/
 cloudflare.deb
 logs.txt
+tls.crt
+tls.key

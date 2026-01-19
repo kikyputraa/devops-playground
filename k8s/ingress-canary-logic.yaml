@@ -8,6 +8,9 @@ metadata:
     nginx.ingress.kubernetes.io/canary: "false"
     # 2. Tambahkan redirect otomatis dari HTTP ke HTTPS
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/hsts: "true"
+    nginx.ingress.kubernetes.io/hsts-max-age: "31536000"
+
 spec:
   ingressClassName: nginx
   # 3. Tambahkan blok TLS di sini
