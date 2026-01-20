@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-prod
+  labels:
+    app: flask-app
+    env: prod
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: flask-app
+      env: prod
+  template:
+    metadata:
+      labels:
+        app: flask-app
+        env: prod
+    spec:
+      containers:
+      - name: flask-app
+        image: kikyputraa/devops-playground:6bf922ee1638d5f8c01beae91d311c8725fe1e61 # Tag spesifik untuk prod
+        ports:
+        - containerPort: 5000

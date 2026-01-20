@@ -96,14 +96,17 @@ jobs:
         run: |
           docker load < app_image.tar
           docker push kikyputraa/devops-playground:${{ github.sha }}
-          docker tag kikyputraa/devops-playground:${{ github.sha }} kikyputraa/devops-playground:latest
-          docker push kikyputraa/devops-playground:latest
+          # Update tag 'latest' hanya jika push ke branch main
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            docker tag kikyputraa/devops-playground:${{ github.sha }} kikyputraa/devops-playground:latest
+            docker push kikyputraa/devops-playground:latest
+          fi
 
   deploy_gitops:
     needs: [push_image]
     runs-on: ubuntu-latest
     permissions:
-      contents: write # Wajib agar bot bisa push balik ke repo
+      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
@@ -111,29 +114,32 @@ jobs:
 
       - name: Update Manifests
         run: |
-          # 1. Tentukan env berdasarkan branch
+          # 1. Tentukan folder berdasarkan branch
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            NSP="default"; PT="30001"
+            TARGET_DIR="k8s/prod"
+            echo "Environment: Production"
           else
-            NSP="staging"; PT="30002"
+            TARGET_DIR="k8s/staging"
+            echo "Environment: Staging"
           fi
-          
-          # 2. Update file YAML
-          sed -i "s|namespace:.*|namespace: $NSP|g" k8s/deployment.yaml
-          sed -i "s|nodePort:.*|nodePort: $PT|g" k8s/service.yaml
-          sed -i "s|image:.*|image: kikyputraa/devops-playground:${{ github.sha }}|g" k8s/deployment.yaml
+      
+          sed -i "s|image: .*|image: kikyputraa/devops-playground:${{ github.sha }}|g" $TARGET_DIR/deployment.yaml
 
       - name: Commit and Push changes
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
-          git add k8s/deployment.yaml k8s/service.yaml
+          # Hanya add folder yang diupdate
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            git add k8s/prod/deployment.yaml
+          else
+            git add k8s/staging/deployment.yaml
+          fi
           
-          # Cek jika ada perubahan sebelum commit agar tidak error
           if git diff --quiet && git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "chore: update image tag to ${{ github.sha }} [skip ci]"
+            git commit -m "chore: update ${{ github.ref_name }} image tag to ${{ github.sha }} [skip ci]"
             git push
           fi

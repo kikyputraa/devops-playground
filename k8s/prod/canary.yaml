@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flask-canary
+  labels:
+    app: flask-app
+    env: prod
+    release: canary # Label pembeda
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flask-app
+      env: prod
+      release: canary
+  template:
+    metadata:
+      labels:
+        app: flask-app
+        env: prod
+        release: canary
+    spec:
+      containers:
+      - name: flask-app
+        image: kikyputraa/devops-playground:latest-canary
+        ports:
+        - containerPort: 5000
