@@ -3,7 +3,6 @@ name: DevSecOps Pipeline
 on:
   push:
     branches: [ "main", "staging" ]
-    # Mencegah loop: Jangan jalankan pipeline jika perubahan hanya di folder k8s
     paths-ignore:
       - 'k8s/**'
       - 'README.md'
@@ -13,23 +12,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
       - run: pip install bandit && bandit -r app/ -ll
 
   unit_test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: 'pip'
-      - name: Run Tests
-        run: |
+      - run: |
           pip install pytest pytest-cov Flask
           export PYTHONPATH=$PYTHONPATH:$(pwd)
           pytest --cov=app --cov-report=xml:coverage.xml tests/
@@ -48,8 +37,7 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: coverage-report
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@master
+      - uses: SonarSource/sonarcloud-github-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
@@ -59,8 +47,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - name: Build and Save
-        run: |
+      - run: |
           docker build -t kikyputraa/devops-playground:${{ github.sha }} .
           docker save kikyputraa/devops-playground:${{ github.sha }} > app_image.tar
       - uses: actions/upload-artifact@v4
@@ -72,12 +59,10 @@ jobs:
     needs: [build_image]
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
       - uses: actions/download-artifact@v4
         with:
           name: docker-artifact
-      - name: Trivy Scan
-        uses: aquasecurity/trivy-action@master
+      - uses: aquasecurity/trivy-action@master
         with:
           input: 'app_image.tar'
           severity: 'CRITICAL,HIGH'
@@ -91,19 +76,15 @@ jobs:
       - uses: actions/download-artifact@v4
         with:
           name: docker-artifact
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
+      - uses: docker/login-action@v3
         with:
           username: ${{ secrets.DOCKER_USER }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-      - name: Load and Push
-        run: |
+      - run: |
           docker load < app_image.tar
           docker push kikyputraa/devops-playground:${{ github.sha }}
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            docker tag kikyputraa/devops-playground:${{ github.sha }} kikyputraa/devops-playground:latest
-            docker push kikyputraa/devops-playground:latest
-          fi
+          docker tag kikyputraa/devops-playground:${{ github.sha }} kikyputraa/devops-playground:latest
+          docker push kikyputraa/devops-playground:latest
 
   deploy_gitops:
     needs: [push_image]
@@ -112,9 +93,6 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-
       - name: Update Manifests
         run: |
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
@@ -122,23 +100,20 @@ jobs:
           else
             TARGET_DIR="k8s/staging"
           fi
-          sed -i "s|image: .*|image: kikyputraa/devops-playground:${{ github.sha }}|g" $TARGET_DIR/deployment.yaml
+          # Update to latest and set Always pull policy
+          sed -i "s|image: .*|image: kikyputraa/devops-playground:latest|g" $TARGET_DIR/deployment.yaml
+          if ! grep -q "imagePullPolicy: Always" $TARGET_DIR/deployment.yaml; then
+            sed -i "/image: .*/a \        imagePullPolicy: Always" $TARGET_DIR/deployment.yaml
+          fi
 
-      - name: Commit and Push changes
+      - name: Commit and Push
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          
-          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
-            git add k8s/prod/deployment.yaml
-          else
-            git add k8s/staging/deployment.yaml
-          fi
-          
+          git add k8s/
           if git diff --quiet && git diff --staged --quiet; then
-            echo "No changes to commit"
+            echo "No changes"
           else
-            # Tanpa [skip ci], tapi loop dicegah oleh paths-ignore di atas
-            git commit -m "chore: update ${{ github.ref_name }} image tag to ${{ github.sha }}"
+            git commit -m "chore: update manifests to latest with Always pull policy"
             git push
           fi

@@ -80,11 +80,9 @@ push_job:
     - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USER" --password-stdin
     - docker load < image.tar
     - docker push $DOCKER_IMAGE:$CI_COMMIT_SHORT_SHA
-    - |
-      if [ "$CI_COMMIT_BRANCH" == "main" ]; then
-        docker tag $DOCKER_IMAGE:$CI_COMMIT_SHORT_SHA $DOCKER_IMAGE:latest
-        docker push $DOCKER_IMAGE:latest
-      fi
+    # Selalu update tag latest
+    - docker tag $DOCKER_IMAGE:$CI_COMMIT_SHORT_SHA $DOCKER_IMAGE:latest
+    - docker push $DOCKER_IMAGE:latest
 
 # --- STAGE: DEPLOY ---
 deploy_job:
@@ -107,14 +105,17 @@ deploy_job:
         TARGET_FOLDER="k8s/staging"
       fi
       
-      # Update manifest
-      sed -i "s|image: .*|image: $DOCKER_IMAGE:$CI_COMMIT_SHORT_SHA|g" $TARGET_FOLDER/deployment.yaml
+      # Update manifest ke latest dan pastikan PullPolicy Always
+      sed -i "s|image: .*|image: $DOCKER_IMAGE:latest|g" $TARGET_FOLDER/deployment.yaml
+      if ! grep -q "imagePullPolicy: Always" $TARGET_FOLDER/deployment.yaml; then
+        sed -i "/image: .*/a \        imagePullPolicy: Always" $TARGET_FOLDER/deployment.yaml
+      fi
+
       git add $TARGET_FOLDER/deployment.yaml
       
       if git diff --quiet && git diff --staged --quiet; then
         echo "No changes to commit."
       else
-        git commit -m "chore(ops): update $CI_COMMIT_BRANCH image tag to $CI_COMMIT_SHORT_SHA"
-        # Push menggunakan push option ci.skip agar tidak terjadi looping
-        git push origin HEAD:$CI_COMMIT_BRANCH -o ci.skip
+        git commit -m "chore(ops): update $CI_COMMIT_BRANCH manifest to latest with Always pull policy"
+        git push origin HEAD:$CI_COMMIT_BRANCH -o
       fi
