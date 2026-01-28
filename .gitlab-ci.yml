@@ -11,6 +11,13 @@ variables:
   GIT_DEPTH: "0"
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
 
+# Mencegah loop tanpa status 'skipped' di badge
+workflow:
+  rules:
+    - if: '$CI_COMMIT_MESSAGE =~ /chore\(ops\)/'
+      when: never
+    - when: always
+
 cache:
   paths:
     - .cache/pip
@@ -80,7 +87,6 @@ push_job:
     - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USER" --password-stdin
     - docker load < image.tar
     - docker push $DOCKER_IMAGE:$CI_COMMIT_SHORT_SHA
-    # Selalu update tag latest
     - docker tag $DOCKER_IMAGE:$CI_COMMIT_SHORT_SHA $DOCKER_IMAGE:latest
     - docker push $DOCKER_IMAGE:latest
 
@@ -93,6 +99,8 @@ deploy_job:
     - main
     - staging
   before_script:
+    # TRIK SAKTI: Paksa pakai HTTP agar tidak kena TLS Timeout/Error
+    - sed -i 's/https/http/g' /etc/apk/repositories
     - apk add --no-cache git sed
     - git config --global user.email "gitlab-ci@kikyputra.com"
     - git config --global user.name "GitLab CI Bot"
@@ -105,8 +113,10 @@ deploy_job:
         TARGET_FOLDER="k8s/staging"
       fi
       
-      # Update manifest ke latest dan pastikan PullPolicy Always
+      # Ubah image ke latest
       sed -i "s|image: .*|image: $DOCKER_IMAGE:latest|g" $TARGET_FOLDER/deployment.yaml
+      
+      # Tambahkan pull policy Always (dengan indentasi 8 spasi agar valid YAML)
       if ! grep -q "imagePullPolicy: Always" $TARGET_FOLDER/deployment.yaml; then
         sed -i "/image: .*/a \        imagePullPolicy: Always" $TARGET_FOLDER/deployment.yaml
       fi
@@ -116,6 +126,6 @@ deploy_job:
       if git diff --quiet && git diff --staged --quiet; then
         echo "No changes to commit."
       else
-        git commit -m "chore(ops): update $CI_COMMIT_BRANCH manifest to latest with Always pull policy"
-        git push origin HEAD:$CI_COMMIT_BRANCH -o
+        git commit -m "chore(ops): update $CI_COMMIT_BRANCH manifest to latest"
+        git push origin HEAD:$CI_COMMIT_BRANCH
       fi
