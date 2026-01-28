@@ -1,4 +1,4 @@
-FROM python:3.11-slim
+FROM python:3.11-alpine
 
 # Mencegah Python menulis file .pyc dan memastikan output log langsung muncul
 ENV PYTHONDONTWRITEBYTECODE=1
