@@ -11,7 +11,6 @@ variables:
   GIT_DEPTH: "0"
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
 
-# Cache library python agar pipeline lebih cepat
 cache:
   paths:
     - .cache/pip
@@ -66,7 +65,9 @@ build_job:
 # --- STAGE: SECURITY ---
 trivy_scan:
   stage: security
-  image: { name: aquasec/trivy:latest, entrypoint: [""] }
+  image: 
+    name: aquasec/trivy:latest
+    entrypoint: [""]
   needs: [build_job]
   script:
     - trivy image --input image.tar --severity HIGH,CRITICAL --exit-code 1 --ignore-unfixed --ignorefile .trivyignore
@@ -82,14 +83,13 @@ push_job:
     - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USER" --password-stdin
     - docker load < image.tar
     - docker push $DOCKER_IMAGE:$CI_COMMIT_SHORT_SHA
-    # Tag 'latest' hanya diupdate jika di branch main
     - |
       if [[ "$CI_COMMIT_BRANCH" == "main" ]]; then
         docker tag $DOCKER_IMAGE:$CI_COMMIT_SHORT_SHA $DOCKER_IMAGE:latest
         docker push $DOCKER_IMAGE:latest
       fi
 
-# --- STAGE: DEPLOY (Update Manifest for ArgoCD) ---
+# --- STAGE: DEPLOY ---
 deploy_job:
   stage: deploy
   image: alpine:latest
@@ -108,15 +108,11 @@ deploy_job:
         TARGET_FOLDER="k8s/staging"
         echo "Deploying to Staging environment..."
       fi
-    
-    # Update image tag di file deployment dalam folder yang sesuai
     - sed -i "s|image: .*|image: $DOCKER_IMAGE:$CI_COMMIT_SHORT_SHA|g" $TARGET_FOLDER/deployment.yaml
-    
-    # Commit perubahan balik ke repository
     - git add $TARGET_FOLDER/deployment.yaml
     - |
       if git diff --quiet && git diff --staged --quiet; then
-        echo "No changes to commit. Image tag is already updated."
+        echo "No changes to commit."
       else
         git commit -m "chore(ops): update $CI_COMMIT_BRANCH image to $CI_COMMIT_SHORT_SHA [skip ci]"
         git push origin HEAD:$CI_COMMIT_BRANCH
