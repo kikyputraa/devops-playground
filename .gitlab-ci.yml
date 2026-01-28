@@ -106,16 +106,14 @@ deploy_job:
       else
         TARGET_FOLDER="k8s/staging"
       fi
-      echo "Targeting folder: $TARGET_FOLDER"
       
-      # Update image tag dengan sed (dipastikan tidak ada mapping value error)
       sed -i "s|image: .*|image: $DOCKER_IMAGE:$CI_COMMIT_SHORT_SHA|g" $TARGET_FOLDER/deployment.yaml
-      
       git add $TARGET_FOLDER/deployment.yaml
       
       if git diff --quiet && git diff --staged --quiet; then
         echo "No changes to commit."
       else
-        git commit -m "chore(ops): update $CI_COMMIT_BRANCH image to $CI_COMMIT_SHORT_SHA [skip ci]"
-        git push origin HEAD:$CI_COMMIT_BRANCH
+        git commit -m "chore(ops): update $CI_COMMIT_BRANCH image tag to $CI_COMMIT_SHORT_SHA"
+        # Push dengan opsi ci.skip agar commit ini tidak memicu pipeline baru
+        git push origin HEAD:$CI_COMMIT_BRANCH -o ci.skip
       fi

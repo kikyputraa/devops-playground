@@ -3,6 +3,10 @@ name: DevSecOps Pipeline
 on:
   push:
     branches: [ "main", "staging" ]
+    # Mencegah loop: Jangan jalankan pipeline jika perubahan hanya di folder k8s
+    paths-ignore:
+      - 'k8s/**'
+      - 'README.md'
 
 jobs:
   sast_bandit:
@@ -35,7 +39,7 @@ jobs:
           path: coverage.xml
 
   sonarqube_check:
-    needs: [sast_bandit, unit_test]
+    needs: [unit_test]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -96,7 +100,6 @@ jobs:
         run: |
           docker load < app_image.tar
           docker push kikyputraa/devops-playground:${{ github.sha }}
-          # Update tag 'latest' hanya jika push ke branch main
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             docker tag kikyputraa/devops-playground:${{ github.sha }} kikyputraa/devops-playground:latest
             docker push kikyputraa/devops-playground:latest
@@ -114,15 +117,11 @@ jobs:
 
       - name: Update Manifests
         run: |
-          # 1. Tentukan folder berdasarkan branch
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             TARGET_DIR="k8s/prod"
-            echo "Environment: Production"
           else
             TARGET_DIR="k8s/staging"
-            echo "Environment: Staging"
           fi
-      
           sed -i "s|image: .*|image: kikyputraa/devops-playground:${{ github.sha }}|g" $TARGET_DIR/deployment.yaml
 
       - name: Commit and Push changes
@@ -130,7 +129,6 @@ jobs:
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
           
-          # Hanya add folder yang diupdate
           if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
             git add k8s/prod/deployment.yaml
           else
@@ -140,6 +138,7 @@ jobs:
           if git diff --quiet && git diff --staged --quiet; then
             echo "No changes to commit"
           else
-            git commit -m "chore: update ${{ github.ref_name }} image tag to ${{ github.sha }} [skip ci]"
+            # Tanpa [skip ci], tapi loop dicegah oleh paths-ignore di atas
+            git commit -m "chore: update ${{ github.ref_name }} image tag to ${{ github.sha }}"
             git push
           fi
