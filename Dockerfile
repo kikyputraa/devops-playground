@@ -20,7 +20,7 @@ RUN pip install --no-cache-dir "jaraco.context>=6.1.0" && \
 COPY app/ .
 
 # Membuat user non-root demi keamanan (opsional tapi sangat disarankan)
-RUN useradd -m myuser
+RUN adduser -D myuser
 USER myuser
 
 EXPOSE 5000
