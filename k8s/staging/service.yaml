@@ -2,10 +2,12 @@ apiVersion: v1
 kind: Service
 metadata:
   name: flask-service-staging
+  namespace: staging
 spec:
   selector:
     app: flask-app
-    env: staging
   ports:
-  - port: 80
+  - protocol: TCP
+    port: 80
     targetPort: 5000
+  type: NodePort
