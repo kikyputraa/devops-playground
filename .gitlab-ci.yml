@@ -98,7 +98,7 @@ deploy_job:
     - apk add --no-cache git sed
     - git config --global user.email "gitlab-ci@kikyputra.com"
     - git config --global user.name "GitLab CI Bot"
-    - git remote set-url origin https://gitlab+deploy-token-11062953:${GITLAB_ACCESS_TOKEN}@gitlab.com/${CI_PROJECT_PATH}.git
+    - git remote set-url origin https://gitlab%2Bdeploy-token-11062953:${GITLAB_ACCESS_TOKEN}@gitlab.com/${CI_PROJECT_PATH}.git
   script:
     - |
       if [ "$CI_COMMIT_BRANCH" == "main" ]; then
