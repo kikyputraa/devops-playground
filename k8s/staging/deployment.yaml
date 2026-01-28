@@ -19,6 +19,6 @@ spec:
     spec:
       containers:
       - name: flask-app
-        image: kikyputraa/devops-playground:85b46b5963ef636eca1bb315c5e0e15cf6f39f5d
+        image: kikyputraa/devops-playground:2abba70ce1cb58658e02c453bec9cf8f8ec2006f
         ports:
         - containerPort: 5000
