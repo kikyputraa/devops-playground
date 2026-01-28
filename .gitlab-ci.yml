@@ -43,10 +43,7 @@ sonarqube_check:
     entrypoint: [""]
   needs: [unit_test]
   script:
-    - sonar-scanner 
-        -Dsonar.token=$SONAR_TOKEN 
-        -Dsonar.python.coverage.reportPaths=coverage.xml 
-        -Dsonar.python.version=3.11
+    - sonar-scanner -Dsonar.token=$SONAR_TOKEN -Dsonar.python.coverage.reportPaths=coverage.xml -Dsonar.python.version=3.11
 
 # --- STAGE: BUILD ---
 build_job:
@@ -70,7 +67,7 @@ trivy_scan:
     entrypoint: [""]
   needs: [build_job]
   script:
-    - trivy image --input image.tar --severity HIGH,CRITICAL --exit-code 1 --ignore-unfixed --ignorefile .trivyignore
+    - trivy image --input image.tar --severity HIGH,CRITICAL --exit-code 1 --ignore-unfixed
 
 # --- STAGE: PUSH ---
 push_job:
@@ -109,10 +106,13 @@ deploy_job:
       else
         TARGET_FOLDER="k8s/staging"
       fi
-    - echo "Targeting folder $TARGET_FOLDER"
-    - sed -i "s|image: .*|image: $DOCKER_IMAGE:$CI_COMMIT_SHORT_SHA|g" $TARGET_FOLDER/deployment.yaml
-    - git add $TARGET_FOLDER/deployment.yaml
-    - |
+      echo "Targeting folder: $TARGET_FOLDER"
+      
+      # Update image tag dengan sed (dipastikan tidak ada mapping value error)
+      sed -i "s|image: .*|image: $DOCKER_IMAGE:$CI_COMMIT_SHORT_SHA|g" $TARGET_FOLDER/deployment.yaml
+      
+      git add $TARGET_FOLDER/deployment.yaml
+      
       if git diff --quiet && git diff --staged --quiet; then
         echo "No changes to commit."
       else
