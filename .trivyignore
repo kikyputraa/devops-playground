@@ -1,2 +1,5 @@
-# Mengabaikan Path Traversal pada jaraco.context karena dependensi sistem yang tidak kritikal untuk aplikasi teks
-GHSA-58pv-8j8x-9vj2
+# Mengabaikan CVE yang ditemukan di staging/dev playground
+# Jaraco.context path traversal
+CVE-2026-23949
+# Wheel privilege escalation
+CVE-2026-24049

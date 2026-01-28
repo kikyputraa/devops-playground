@@ -1,5 +1,8 @@
-Flask==2.3.3
-pytest==7.4.2
-pytest-cov==4.1.0
-bandit==1.7.5
+Flask==3.1.0
+werkzeug==3.1.5
+# Fix vulnerabilities CVE-2026-23949 & CVE-2026-24049
 jaraco.context>=6.1.0
+wheel>=0.46.2
+# Tambahan untuk testing
+pytest==8.3.4
+pytest-cov==6.0.0

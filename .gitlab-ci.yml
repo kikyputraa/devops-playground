@@ -11,7 +11,6 @@ variables:
   GIT_DEPTH: "0"
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
 
-# Cache library python agar pipeline lebih cepat
 cache:
   paths:
     - .cache/pip
@@ -110,7 +109,7 @@ deploy_job:
       else
         TARGET_FOLDER="k8s/staging"
       fi
-      echo "Target folder is $TARGET_FOLDER"
+    - echo "Targeting folder $TARGET_FOLDER"
     - sed -i "s|image: .*|image: $DOCKER_IMAGE:$CI_COMMIT_SHORT_SHA|g" $TARGET_FOLDER/deployment.yaml
     - git add $TARGET_FOLDER/deployment.yaml
     - |
