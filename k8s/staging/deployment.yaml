@@ -19,6 +19,6 @@ spec:
     spec:
       containers:
       - name: flask-app
-        image: kikyputraa/devops-playground:latest # Nanti diupdate otomatis oleh CI/CD branch staging
+        image: kikyputraa/devops-playground:b86426d2cd28afc68213a8636c3bff4d5e6b3d77
         ports:
         - containerPort: 5000
