@@ -22,6 +22,6 @@ spec:
     spec:
       containers:
       - name: flask-app
-        image: kikyputraa/devops-playground:latest-canary
+        image: kikyputraa/devops-playground:latest
         ports:
         - containerPort: 5000
