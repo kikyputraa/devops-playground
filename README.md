@@ -94,6 +94,13 @@ The security workflow is designed to fail the pipeline if high-risk issues are d
 4. **Push:** Sends validated images to Docker Hub.
 5. **Deploy:** Injects environment configurations into Kubernetes manifests (Namespace & Port) using `sed`.
 
+## 🌐 Infrastructure Overview
+
+| Environment  | Domain Name                     | Namespace | Replica Count | Auto-Scaling (HPA) |
+|--------------|---------------------------------|-----------|---------------|--------------------|
+| **Production** | `flask.devops.local`          | `prod`    | 3 - 10 Pods   | Enabled (>70% CPU) |
+| **Staging** | `staging.flask.devops.local`  | `staging` | 2 - 5 Pods    | Enabled (>50% CPU) |
+
 ## 🛠️ Environment Details
 
 | Feature | Staging Environment | Production Environment |

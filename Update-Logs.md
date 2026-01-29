@@ -1,5 +1,10 @@
 ## 🆕 Latest Updates
 
+- **(29/01) Multi-Environment Architecture (Staging & Production):** Architected a complete separation between *Staging* and *Production* environments using Kubernetes Namespaces. Implemented independent manifest directories to ensure configuration isolation and autonomous environment lifecycles.
+- **(29/01) Metrics Server Integration & Observability:** Integrated the *Metrics Server* on Minikube to facilitate real-time resource monitoring. This enables the HPA (Horizontal Pod Autoscaler) to fetch accurate CPU/Memory utilization metrics for precise auto-scaling decisions.
+- **(29/01) High Availability (HA) Production Blueprint:** Optimized the Production Deployment with a 3-replica baseline and increased *Resource Quotas* (Requests/Limits) to guarantee application stability and resilience under high traffic loads.
+- **(29/01) Automated Scale-Down & Resource Recovery:** Verified the full HPA lifecycle, including the automated *downscaling* process once workloads decrease, ensuring efficient cluster resource utilization and cost-optimization.
+- **(29/01) Permission-Based Docker Socket Resolution:** Resolved Docker daemon access issues (`permission denied`) on the Linux host by configuring *non-root user group* management, ensuring seamless integration between Minikube, Docker, and CI runners.
 - **(19/01) GitOps Implementation with ArgoCD:** Transitioned from "Push-based" to "Pull-based" deployment architecture. Integrated ArgoCD to enforce the "Source of Truth" principle, ensuring the Kubernetes cluster state always synchronizes automatically with the Git repository.
 - **(19/01) Automated Manifest Reconciliation:** Configured a dedicated CI-to-Git feedback loop where GitHub Actions/GitLab CI automatically updates Kubernetes manifests (image tags) via Git commits. This eliminates the need for manual `kubectl` access within the CI pipeline.
 - **(19/01) Infrastructure Self-Healing & Drift Detection:** Enabled ArgoCD’s automated sync policy with `Prune` and `Self-Heal` capabilities. The system now automatically detects and reverts "configuration drift" caused by manual ad-hoc changes in the cluster.
