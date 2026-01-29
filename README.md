@@ -106,8 +106,8 @@ The security workflow is designed to fail the pipeline if high-risk issues are d
 | Feature | Staging Environment | Production Environment |
 | :--- | :--- | :--- |
 | **Branch** | `staging` | `main` |
-| **K8s Namespace** | `staging` | `default` |
-| **NodePort** | `30002` | `30001` |
+| **K8s Namespace** | `staging` | `prod` |  <-- Update ini
+| **Domain** | `staging.flask.devops.local` | `flask.devops.local` | <-- Tambahin ini
 | **SonarCloud Project** | `kikyputraa_devops-playground` | `kikyputraa_devops-playground` |
 
 ## ⚙️ Secrets Configuration
