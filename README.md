@@ -58,19 +58,23 @@ To run this project from development to automated deployment, you will need the 
 * **CI/CD Runners:**
   - **GitHub Self-hosted Runner** or **GitLab Runner** installed on a machine with access to the Kubernetes cluster.
   - Runners must have permissions to execute `docker` commands (access to `docker.sock`) and `kubectl`.
+* **ArgoCD:** 
+  - Automate CD with Kubernetes
+  - Monitoring Applications Environments
 
 ### 3. Local Machine Software (Optional for Testing)
 For local testing before pushing to the repository:
 * **Python 3.9+** & **Pip** (to run Flask & Pytest).
 * **Docker Engine** (for local image builds).
 * **Kubectl CLI** (for cluster management).
+* **ArgoCD** (for automated CD config).
 * **Trivy CLI** & **Bandit** (for local security scanning).
 
 ### 4. Essential Configuration Files
 Ensure the following files are in the project root directory:
 * `sonar-project.properties`: SonarCloud project identification.
 * `Dockerfile`: Application container configuration.
-* `k8s/`: Folder containing `deployment.yaml` and `service.yml` manifests.
+* `k8s/`: Folder containing k8s yaml file for each environments to manifests.
 * `requirements.txt`: List of Python dependencies (Flask, Pytest-cov, etc.).
 
 ## 🚀 Key Features
