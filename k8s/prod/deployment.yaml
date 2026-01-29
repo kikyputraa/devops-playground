@@ -1,24 +1,59 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: flask-prod
+  name: flask-prod   
+  namespace: prod              
   labels:
     app: flask-app
-    env: prod
+    env: production 
+    tier: frontend
 spec:
-  replicas: 2
+  replicas: 3                   # Start dengan 3 pod (High Availability)
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1               # Nambah 1 pod baru dulu sebelum hapus yang lama
+      maxUnavailable: 0         # Jangan biarkan ada pod yang mati selama update
   selector:
     matchLabels:
       app: flask-app
-      env: prod
+      env: production           # Harus sama dengan template labels di bawah
   template:
     metadata:
       labels:
         app: flask-app
-        env: prod
+        env: production
     spec:
       containers:
       - name: flask-app
-        image: kikyputraa/devops-playground:6bf922ee1638d5f8c01beae91d311c8725fe1e61 # Tag spesifik untuk prod
+        image: kikyputraa/devops-playground:latest # Gunakan image stabil
+        imagePullPolicy: Always
         ports:
         - containerPort: 5000
+        
+        # Resource di Prod biasanya lebih tinggi dikit
+        resources:
+          requests:
+            memory: "128Mi"      # Naikkan ke 128Mi
+            cpu: "200m"          # Naikkan ke 200m (0.2 CPU)
+          limits:
+            memory: "256Mi"
+            cpu: "500m"          # Beri ruang lebih luas untuk lonjakan trafik
+            
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 5000
+          initialDelaySeconds: 20 # Beri waktu lebih lama buat start
+          periodSeconds: 20
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 5000
+          initialDelaySeconds: 10
+          periodSeconds: 10
+
+        securityContext:
+          allowPrivilegeEscalation: false
+          runAsNonRoot: true
+          runAsUser: 1000
