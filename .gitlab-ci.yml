@@ -11,7 +11,6 @@ variables:
   GIT_DEPTH: "0"
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
 
-# Mencegah loop tanpa status 'skipped' di badge
 workflow:
   rules:
     - if: '$CI_COMMIT_MESSAGE =~ /chore\(ops\)/'
@@ -99,7 +98,6 @@ deploy_job:
     - main
     - staging
   before_script:
-    # TRIK SAKTI: Paksa pakai HTTP agar tidak kena TLS Timeout/Error
     - sed -i 's/https/http/g' /etc/apk/repositories
     - apk add --no-cache git sed
     - git config --global user.email "gitlab-ci@kikyputra.com"

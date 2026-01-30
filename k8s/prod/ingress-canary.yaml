@@ -6,16 +6,16 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/rewrite-target: /
     nginx.ingress.kubernetes.io/canary: "true"
-    nginx.ingress.kubernetes.io/canary-weight: "10" # 10% trafik ke versi baru
+    nginx.ingress.kubernetes.io/canary-weight: "10"
 spec:
   rules:
-  - host: flask.devops.local # Host HARUS sama dengan main prod
+  - host: flask.devops.local
     http:
       paths:
       - path: /
         pathType: Prefix
         backend:
           service:
-            name: flask-service-canary # Mengarah ke service canary kamu
+            name: flask-service-canary
             port:
               number: 80

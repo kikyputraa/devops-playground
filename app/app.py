@@ -3,7 +3,6 @@ from flask import Flask, jsonify
 
 app = Flask(__name__)
 
-# Mengambil info versi dari Environment Variable
 APP_VERSION = os.getenv("APP_VERSION", "V1-Stable")
 
 @app.route('/')
@@ -15,7 +14,6 @@ def hello():
         "environment": "Production"
     })
 
-# TAMBAHKAN INI AGAR UNIT TEST PASS
 @app.route('/health')
 def health():
     return jsonify({"status": "ok"}), 200

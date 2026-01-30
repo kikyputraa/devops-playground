@@ -1,5 +1,2 @@
-# Mengabaikan CVE yang ditemukan di staging/dev playground
-# Jaraco.context path traversal
 CVE-2026-23949
-# Wheel privilege escalation
 CVE-2026-24049

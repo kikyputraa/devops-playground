@@ -31,7 +31,6 @@ spec:
         ports:
         - containerPort: 5000
         
-        # 1. Resource Management
         resources:
           requests:
             memory: "64Mi"
@@ -40,7 +39,6 @@ spec:
             memory: "128Mi"
             cpu: "200m"
             
-        # 2. Health Checks
         livenessProbe:
           httpGet:
             path: /
@@ -54,7 +52,6 @@ spec:
           initialDelaySeconds: 5
           periodSeconds: 10
 
-        # 3. Security Context
         securityContext:
           allowPrivilegeEscalation: false
           runAsNonRoot: true

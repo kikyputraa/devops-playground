@@ -8,16 +8,16 @@ metadata:
     env: production 
     tier: frontend
 spec:
-  replicas: 3                   # Start dengan 3 pod (High Availability)
+  replicas: 3
   strategy:
     type: RollingUpdate
     rollingUpdate:
-      maxSurge: 1               # Nambah 1 pod baru dulu sebelum hapus yang lama
-      maxUnavailable: 0         # Jangan biarkan ada pod yang mati selama update
+      maxSurge: 1
+      maxUnavailable: 0
   selector:
     matchLabels:
       app: flask-app
-      env: production           # Harus sama dengan template labels di bawah
+      env: production
   template:
     metadata:
       labels:
@@ -26,25 +26,24 @@ spec:
     spec:
       containers:
       - name: flask-app
-        image: kikyputraa/devops-playground:latest # Gunakan image stabil
+        image: kikyputraa/devops-playground:latest
         imagePullPolicy: Always
         ports:
         - containerPort: 5000
         
-        # Resource di Prod biasanya lebih tinggi dikit
         resources:
           requests:
-            memory: "128Mi"      # Naikkan ke 128Mi
-            cpu: "200m"          # Naikkan ke 200m (0.2 CPU)
+            memory: "128Mi"
+            cpu: "200m"
           limits:
             memory: "256Mi"
-            cpu: "500m"          # Beri ruang lebih luas untuk lonjakan trafik
+            cpu: "500m"
             
         livenessProbe:
           httpGet:
             path: /
             port: 5000
-          initialDelaySeconds: 20 # Beri waktu lebih lama buat start
+          initialDelaySeconds: 20
           periodSeconds: 20
         readinessProbe:
           httpGet:

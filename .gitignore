@@ -1,4 +1,3 @@
-# Mengabaikan folder hasil scan (jika ada)
 .sonar/
 .scannerwork/
 cloudflare.deb

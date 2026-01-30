@@ -5,7 +5,7 @@ metadata:
   labels:
     app: flask-app
     env: prod
-    release: canary # Label pembeda
+    release: canary
 spec:
   replicas: 1
   selector:
