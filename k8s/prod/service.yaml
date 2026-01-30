@@ -6,7 +6,6 @@ metadata:
 spec:
   selector:
     app: flask-app
-    env: production
   ports:
     - protocol: TCP
       port: 80
