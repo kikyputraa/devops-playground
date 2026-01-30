@@ -5,55 +5,26 @@ metadata:
   namespace: prod              
   labels:
     app: flask-app
-    env: production 
-    tier: frontend
 spec:
   replicas: 3
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 0
   selector:
     matchLabels:
       app: flask-app
-      env: production
   template:
     metadata:
       labels:
         app: flask-app
-        env: production
     spec:
-      automountServiceAccountToken: false
+      # Level Pod Spec
+      automountServiceAccountToken: false 
       containers:
       - name: flask-app
         image: kikyputraa/devops-playground:latest
-        imagePullPolicy: Always
-        ports:
-        - containerPort: 5000
-        
         resources:
           requests:
+            cpu: "100m"
             memory: "128Mi"
-            cpu: "200m"
+            ephemeral-storage: "50Mi" # Masuk ke dalam requests
           limits:
+            cpu: "200m"
             memory: "256Mi"
-            cpu: "500m"
-            
-        livenessProbe:
-          httpGet:
-            path: /
-            port: 5000
-          initialDelaySeconds: 20
-          periodSeconds: 20
-        readinessProbe:
-          httpGet:
-            path: /
-            port: 5000
-          initialDelaySeconds: 10
-          periodSeconds: 10
-
-        securityContext:
-          allowPrivilegeEscalation: false
-          runAsNonRoot: true
-          runAsUser: 1000

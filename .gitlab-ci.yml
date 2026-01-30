@@ -1,142 +1,130 @@
-stages:
-  - sast
-  - test
-  - build
-  - security
-  - push
-  - deploy
+  stages:
+    - sast
+    - test
+    - build
+    - security
+    - push
+    - deploy
 
-variables:
-  DOCKER_IMAGE: "kikyputraa/devops-playground"
-  GIT_DEPTH: "0"
-  PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
-  #DOCKER_TLS_CERTDIR: ""
-  #DOCKER_HOST: tcp://docker:2375
+  variables:
+    DOCKER_IMAGE: "kikyputraa/devops-playground"
+    GIT_DEPTH: "0"
+    PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+    #DOCKER_TLS_CERTDIR: ""
+    #DOCKER_HOST: tcp://docker:2375
 
-#workflow:
-  #rules:
-    #- if: '$CI_COMMIT_MESSAGE =~ /chore\(ops\)/'
-    #- when: never
-    #- when: always
+  #workflow:
+    #rules:
+      #- if: '$CI_COMMIT_MESSAGE =~ /chore\(ops\)/'
+      #- when: never
+      #- when: always
 
-cache:
-  paths:
-    - .cache/pip
-
-# --- STAGE: SAST ---
-sast_bandit:
-  stage: sast
-  image: python:3.11-slim
-  script:
-    - pip install bandit
-    - bandit -r app/ -ll
-
-# --- STAGE: TEST ---
-unit_test:
-  stage: test
-  image: python:3.11-slim
-  script:
-    - pip install pytest pytest-cov Flask
-    - export PYTHONPATH=$PYTHONPATH:$(pwd)
-    - pytest --cov=app --cov-report=xml:coverage.xml tests/
-  artifacts:
+  cache:
     paths:
-      - coverage.xml
-    expire_in: 1 hour
+      - .cache/pip
 
-sonarqube_check:
-  stage: test
-  image: 
-    name: sonarsource/sonar-scanner-cli:latest
-    entrypoint: [""]
-  needs: [unit_test]
-  script:
-    - sonar-scanner -Dsonar.token=$SONAR_TOKEN -Dsonar.python.coverage.reportPaths=coverage.xml -Dsonar.python.version=3.11
+  # --- STAGE: SAST ---
+  sast_bandit:
+    stage: sast
+    image: python:3.11-slim
+    script:
+      - pip install bandit
+      - bandit -r app/ -ll
 
-# --- STAGE: BUILD ---
-build_job:
-  stage: build
-  image: docker:24.0.5
-  script:
-    - docker build -t $DOCKER_IMAGE:$CI_COMMIT_SHORT_SHA .
-    - docker save $DOCKER_IMAGE:$CI_COMMIT_SHORT_SHA > image.tar
-  artifacts:
-    paths:
-      - image.tar
-    expire_in: 1 hour
+  # --- STAGE: TEST ---
+  unit_test:
+    stage: test
+    image: python:3.11-slim
+    script:
+      - pip install pytest pytest-cov Flask
+      - export PYTHONPATH=$PYTHONPATH:$(pwd)
+      - pytest --cov=app --cov-report=xml:coverage.xml tests/
+    artifacts:
+      paths:
+        - coverage.xml
+      expire_in: 1 hour
 
-# --- STAGE: SECURITY ---
-trivy_scan:
-  stage: security
-  image: 
-    name: aquasec/trivy:latest
-    entrypoint: [""]
-  needs: [build_job]
-  script:
-    - trivy image --input image.tar --severity HIGH,CRITICAL --exit-code 1 --ignore-unfixed
+  sonarqube_check:
+    stage: test
+    image: 
+      name: sonarsource/sonar-scanner-cli:latest
+      entrypoint: [""]
+    needs: [unit_test]
+    script:
+      - sonar-scanner -Dsonar.token=$SONAR_TOKEN -Dsonar.python.coverage.reportPaths=coverage.xml -Dsonar.python.version=3.11
 
-# --- STAGE: PUSH ---
-push_job:
-  stage: push
-  image: docker:24.0.5
-  services:
-    - docker:24.0.5-dind
-  needs: [trivy_scan, build_job]
-  script:
-    - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USER" --password-stdin
-    - docker load < image.tar
-    - docker push $DOCKER_IMAGE:$CI_COMMIT_SHORT_SHA
-    # Push 'latest' hanya untuk referensi, tapi deploy prod pakai SHA
-    - docker tag $DOCKER_IMAGE:$CI_COMMIT_SHORT_SHA $DOCKER_IMAGE:latest
-    - docker push $DOCKER_IMAGE:latest
+  # --- STAGE: BUILD ---
+  build_job:
+    stage: build
+    image: docker:24.0.5
+    script:
+      - docker build -t $DOCKER_IMAGE:$CI_COMMIT_SHORT_SHA .
+      - docker save $DOCKER_IMAGE:$CI_COMMIT_SHORT_SHA > image.tar
+    artifacts:
+      paths:
+        - image.tar
+      expire_in: 1 hour
 
-# --- STAGE: DEPLOY ---
-deploy_job:
-  stage: deploy
-  image: alpine:latest
-  needs: [push_job]
-  only:
-    - main
-    - staging
-  before_script:
-    - sed -i 's/https/http/g' /etc/apk/repositories
-    - apk add --no-cache git sed
-    - git config --global user.email "gitlab-ci@kikyputra.com"
-    - git config --global user.name "GitLab CI Bot"
-    - git remote set-url origin https://oauth2:${GITLAB_ACCESS_TOKEN}@gitlab.com/${CI_PROJECT_PATH}.git
-  script:
-    - |
-      if [ "$CI_COMMIT_BRANCH" == "main" ]; then
-        TARGET_FOLDER="k8s/prod"
-        # PROD: Gunakan SHA agar bisa rollback & aman (SonarQube Happy)
-        NEW_IMAGE="$DOCKER_IMAGE:$CI_COMMIT_SHORT_SHA"
-      else
-        TARGET_FOLDER="k8s/staging"
-        # STAGING: Tetap pakai latest biar cepat
-        NEW_IMAGE="$DOCKER_IMAGE:latest"
-      fi
-      
-      # Update image di deployment.yaml
-      sed -i "s|image: .*|image: $NEW_IMAGE|g" $TARGET_FOLDER/deployment.yaml
-      
-      # Pastikan imagePullPolicy: Always
-      if ! grep -q "imagePullPolicy: Always" $TARGET_FOLDER/deployment.yaml; then
-        sed -i "/image: .*/a \        imagePullPolicy: Always" $TARGET_FOLDER/deployment.yaml
-      fi
+  # --- STAGE: SECURITY ---
+  trivy_scan:
+    stage: security
+    image: 
+      name: aquasec/trivy:latest
+      entrypoint: [""]
+    needs: [build_job]
+    script:
+      - trivy image --input image.tar --severity HIGH,CRITICAL --exit-code 1 --ignore-unfixed
 
-      git add $TARGET_FOLDER/deployment.yaml
-      
-      if git diff --quiet && git diff --staged --quiet; then
-        echo "No changes to commit."
-      else
-        git commit -m "chore(ops): update $CI_COMMIT_BRANCH manifest to $NEW_IMAGE"
-        
-        # Tambahkan Git Tag otomatis jika di Main
+  # --- STAGE: PUSH ---
+  push_job:
+    stage: push
+    image: docker:24.0.5
+    services:
+      - docker:24.0.5-dind
+    needs: [trivy_scan, build_job]
+    script:
+      - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USER" --password-stdin
+      - docker load < image.tar
+      - docker push $DOCKER_IMAGE:$CI_COMMIT_SHORT_SHA
+      # Push 'latest' hanya untuk referensi, tapi deploy prod pakai SHA
+      - docker tag $DOCKER_IMAGE:$CI_COMMIT_SHORT_SHA $DOCKER_IMAGE:latest
+      - docker push $DOCKER_IMAGE:latest
+
+  # --- STAGE: DEPLOY ---
+  deploy_job:
+    stage: deploy
+    image: alpine:latest
+    needs: [push_job]
+    only:
+      - main
+      - staging
+    before_script:
+     - apk add --no-cache git
+     - git config --global user.email "gitlab-ci@kikyputra.com"
+     - git config --global user.name "GitLab CI Bot"
+     - git remote set-url origin https://oauth2:${GITLAB_ACCESS_TOKEN}@gitlab.com/${CI_PROJECT_PATH}.git
+    script:
+      - |
         if [ "$CI_COMMIT_BRANCH" == "main" ]; then
-          RELEASE_TAG="release-$CI_COMMIT_SHORT_SHA"
-          git tag $RELEASE_TAG
-          git push origin $RELEASE_TAG
+          TARGET_FOLDER="k8s/prod"
+        else
+          TARGET_FOLDER="k8s/staging"
         fi
+      
+        sed -i "s|image: ${DOCKER_IMAGE}:.*|image: ${DOCKER_IMAGE}:${CI_COMMIT_SHORT_SHA}|g" $TARGET_FOLDER/deployment.yaml
+      
+        sed -i '/imagePullPolicy:/d' $TARGET_FOLDER/deployment.yaml
+        sed -i "/image: .*/a \        imagePullPolicy: Always" $TARGET_FOLDER/deployment.yaml
 
+        git add $TARGET_FOLDER/deployment.yaml
+      
+        if ! git diff --staged --quiet; then
+        git commit -m "chore(ops): update $CI_COMMIT_BRANCH image to $CI_COMMIT_SHORT_SHA [skip ci]"
+        
+        if [ "$CI_COMMIT_BRANCH" == "main" ]; then
+          git tag "release-$CI_COMMIT_SHORT_SHA"
+          git push origin "release-$CI_COMMIT_SHORT_SHA"
+        fi
+        
         git push origin HEAD:$CI_COMMIT_BRANCH
-      fi
+        fi

@@ -5,28 +5,34 @@ metadata:
   namespace: prod
   labels:
     app: flask-app
+    env: prod
     release: canary
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: flask-app
+      env: prod
       release: canary
   template:
     metadata:
       labels:
         app: flask-app
+        env: prod
         release: canary
     spec:
-      automountServiceAccountToken: false
+      automountServiceAccountToken: false # Tempatnya benar di sini (Level Pod Spec)
       containers:
       - name: flask-app
         image: kikyputraa/devops-playground:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 5000
         resources:
           requests:
             cpu: "100m"
             memory: "128Mi"
-            ephemeral-storage: "50Mi"
+            ephemeral-storage: "50Mi" # Pastikan masuk ke dalam requests
           limits:
             cpu: "200m"
             memory: "256Mi"
