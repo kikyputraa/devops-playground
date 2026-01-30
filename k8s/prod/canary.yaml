@@ -21,6 +21,7 @@ spec:
         release: canary
     spec:
       containers:
+        automountServiceAccountToken: false
       - name: flask-app
         image: kikyputraa/devops-playground:latest
         ports:
@@ -30,7 +31,7 @@ spec:
           requests:
             cpu: "100m"
             memory: "128Mi"
-          ephemeral-storage: "50Mi"
+            ephemeral-storage: "50Mi"
           limits:
             cpu: "200m"
             memory: "256Mi"
