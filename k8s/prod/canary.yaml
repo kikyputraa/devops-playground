@@ -2,31 +2,26 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: flask-canary
+  namespace: prod
   labels:
     app: flask-app
-    env: prod
     release: canary
 spec:
   replicas: 1
   selector:
     matchLabels:
       app: flask-app
-      env: prod
       release: canary
   template:
     metadata:
       labels:
         app: flask-app
-        env: prod
         release: canary
     spec:
+      automountServiceAccountToken: false
       containers:
-        automountServiceAccountToken: false
       - name: flask-app
         image: kikyputraa/devops-playground:latest
-        ports:
-        - containerPort: 5000
-
         resources:
           requests:
             cpu: "100m"
