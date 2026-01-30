@@ -10,9 +10,8 @@ variables:
   DOCKER_IMAGE: "kikyputraa/devops-playground"
   GIT_DEPTH: "0"
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
-  # Optimasi Docker-in-Docker
-  DOCKER_TLS_CERTDIR: ""
-  DOCKER_HOST: tcp://docker:2375
+  #DOCKER_TLS_CERTDIR: ""
+  #DOCKER_HOST: tcp://docker:2375
 
 workflow:
   rules:
