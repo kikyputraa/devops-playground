@@ -25,3 +25,12 @@ spec:
         image: kikyputraa/devops-playground:latest
         ports:
         - containerPort: 5000
+
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          ephemeral-storage: "50Mi"
+          limits:
+            cpu: "200m"
+            memory: "256Mi"

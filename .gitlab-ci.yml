@@ -10,6 +10,9 @@ variables:
   DOCKER_IMAGE: "kikyputraa/devops-playground"
   GIT_DEPTH: "0"
   PIP_CACHE_DIR: "$CI_PROJECT_DIR/.cache/pip"
+  # Optimasi Docker-in-Docker
+  DOCKER_TLS_CERTDIR: ""
+  DOCKER_HOST: tcp://docker:2375
 
 workflow:
   rules:
@@ -86,6 +89,7 @@ push_job:
     - echo "$DOCKER_PASSWORD" | docker login -u "$DOCKER_USER" --password-stdin
     - docker load < image.tar
     - docker push $DOCKER_IMAGE:$CI_COMMIT_SHORT_SHA
+    # Push 'latest' hanya untuk referensi, tapi deploy prod pakai SHA
     - docker tag $DOCKER_IMAGE:$CI_COMMIT_SHORT_SHA $DOCKER_IMAGE:latest
     - docker push $DOCKER_IMAGE:latest
 
@@ -107,14 +111,18 @@ deploy_job:
     - |
       if [ "$CI_COMMIT_BRANCH" == "main" ]; then
         TARGET_FOLDER="k8s/prod"
+        # PROD: Gunakan SHA agar bisa rollback & aman (SonarQube Happy)
+        NEW_IMAGE="$DOCKER_IMAGE:$CI_COMMIT_SHORT_SHA"
       else
         TARGET_FOLDER="k8s/staging"
+        # STAGING: Tetap pakai latest biar cepat
+        NEW_IMAGE="$DOCKER_IMAGE:latest"
       fi
       
-      # Ubah image ke latest
-      sed -i "s|image: .*|image: $DOCKER_IMAGE:latest|g" $TARGET_FOLDER/deployment.yaml
+      # Update image di deployment.yaml
+      sed -i "s|image: .*|image: $NEW_IMAGE|g" $TARGET_FOLDER/deployment.yaml
       
-      # Tambahkan pull policy Always (dengan indentasi 8 spasi agar valid YAML)
+      # Pastikan imagePullPolicy: Always
       if ! grep -q "imagePullPolicy: Always" $TARGET_FOLDER/deployment.yaml; then
         sed -i "/image: .*/a \        imagePullPolicy: Always" $TARGET_FOLDER/deployment.yaml
       fi
@@ -124,6 +132,14 @@ deploy_job:
       if git diff --quiet && git diff --staged --quiet; then
         echo "No changes to commit."
       else
-        git commit -m "chore(ops): update $CI_COMMIT_BRANCH manifest to latest"
+        git commit -m "chore(ops): update $CI_COMMIT_BRANCH manifest to $NEW_IMAGE"
+        
+        # Tambahkan Git Tag otomatis jika di Main
+        if [ "$CI_COMMIT_BRANCH" == "main" ]; then
+          RELEASE_TAG="release-$CI_COMMIT_SHORT_SHA"
+          git tag $RELEASE_TAG
+          git push origin $RELEASE_TAG
+        fi
+
         git push origin HEAD:$CI_COMMIT_BRANCH
       fi
