@@ -24,6 +24,7 @@ spec:
         app: flask-app
         env: staging
     spec:
+      automountServiceAccountToken: false
       containers:
       - name: flask-app
         image: kikyputraa/devops-playground:latest
